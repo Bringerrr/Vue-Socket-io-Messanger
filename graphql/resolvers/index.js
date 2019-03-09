@@ -1,0 +1,164 @@
+const bcryptjs = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+
+const User = require("../../models/User");
+const Post = require("../../models/Post");
+const ChatMessage = require("../../models/ChatMessage");
+const ChatRoom = require("../../models/ChatRoom");
+
+const { dateToString } = require("../../helpers/date");
+
+const createToken = (user, secret, expiresIn) => {
+  const { username, email, _id } = user;
+  return jwt.sign({ username, email, _id }, secret, { expiresIn });
+};
+
+const rootResolver = {
+  getCurrentUser: async (args, req) => {
+    const currentUser = jwt.verify(
+      req.body.variables.token,
+      process.env.SECRET
+    );
+
+    console.log("getCurrentUser", currentUser);
+    const { username } = currentUser;
+
+    const user = await User.findOne({
+      username: username
+    });
+    return user;
+  },
+  getPublicChatRooms: async args => {
+    const chatRooms = await ChatRoom.find({}).sort({ createdDate: "desc" });
+    return chatRooms;
+  },
+  getCurrentChatRoomMessages: async (ars, req) => {
+    console.log("getCurrentChatRoomMessages", req.body.variables.roomId);
+    const { roomId } = req.body.variables;
+    const currentChatRoom = await ChatRoom.findById(roomId)
+      .populate({ path: "messages", model: ChatMessage })
+      .lean();
+
+    // rewrite Date into local date string
+    currentChatRoom.messages.map(message => {
+      message.createdDate = dateToString(message.createdDate);
+      return message;
+    });
+
+    return currentChatRoom.messages;
+  },
+  getPosts: async args => {
+    const posts = await Post.find({})
+      .sort({ createdDate: "desc" })
+      .populate({
+        path: "createdBy",
+        model: "User"
+      });
+    return posts;
+  },
+  sendChatMessage: async (args, req) => {
+    console.log("SET MESSAGE");
+    try {
+      const inputMessage = await new ChatMessage({
+        userid: req.body.variables.userid,
+        username: req.body.variables.username,
+        message: req.body.variables.message,
+        deleted: false
+      });
+      const messageid = inputMessage._id;
+      // const currentChatRoom = await ChatRoom.findById(req.body.variables.roomId)
+      await ChatRoom.findOneAndUpdate(
+        { _id: req.body.variables.roomId },
+        { $push: { messages: messageid } },
+        { new: true }
+      )
+        .lean()
+        .exec((err, doc) => {
+          if (err) {
+            console.log("Something wrong when updating data!");
+          }
+          console.log(doc);
+        });
+
+      if (req.body.variables.userid === undefined) {
+        console.log("");
+        return false;
+      }
+      await inputMessage.save();
+      console.log(inputMessage);
+      return inputMessage;
+    } catch (err) {
+      console.log("I am a tea spot: ", err);
+    }
+  },
+  addPost: async (args, req) => {
+    const newPost = await new Post({
+      title: req.body.title,
+      imageUrl: req.body.imageUrl,
+      categories: req.body.categories,
+      description: req.body.description,
+      createdBy: req.body.creatorId
+    }).save();
+    return newPost;
+  },
+  addPublicChatRoom: async (args, req) => {
+    const newPublicChatRoom = await new ChatRoom({
+      participants: [req.body.creatorId],
+      private: req.body.private,
+      title: req.body.title,
+      description: req.body.description,
+      createdBy: req.body.creatorId
+    }).save();
+    const newPublicChatRoomId = newPublicChatRoom._id;
+    const user = await User.findById(creatorId);
+    if (!user) {
+      throw new Error("User not found");
+    }
+    user.chatRooms.push(newPublicChatRoomId);
+    user.save();
+    return newPublicChatRoom;
+  },
+  signinUser: async (args, req) => {
+    // const user = await User.findOne({ username });
+    // if (!user) {
+    //   throw new Error("User not found");
+    // }
+    // const isValidPassword = await bcrypt.compare(password, user.password);
+    // if (!isValidPassword) {
+    //   throw new Error("Invalid password");
+    // }
+    // return { token: createToken(user, process.env.SECRET, "1hr") };
+
+    const user = await User.findOne({ username: req.body.variables.username });
+    if (!user) {
+      throw new Error("User not found");
+    }
+    console.log(req.body.variables.password);
+    const isValidPassword = await bcryptjs.compare(
+      req.body.variables.password,
+      user.password
+    );
+    if (!isValidPassword) {
+      throw new Error("Invalid password");
+    }
+    const token = await { token: createToken(user, process.env.SECRET, "1hr") };
+    // console.log("Sign_In_Token", createToken(user, process.env.SECRET, "1hr"));
+    // let token = null;
+    return token;
+  },
+  signupUser: async (args, req) => {
+    const username = req.body.username;
+    const user = await User.findOne({ username });
+    if (user) {
+      throw new Error("User already exists");
+    }
+    const newUser = await new User({
+      username: req.body.username,
+      email: req.body.email,
+      password: req.body.password
+    }).save();
+    return { token: createToken(newUser, process.env.SECRET, "2hr") };
+  }
+};
+
+module.exports = rootResolver;
