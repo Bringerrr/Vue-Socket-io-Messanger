@@ -95,7 +95,6 @@ export default {
       console.log("message payload", payload);
 
       this.message = "";
-      console.log("currentChatRoomMessages", this.currentChatRoomMessages);
     }
   },
   watch: {
@@ -108,16 +107,14 @@ export default {
   },
   created() {
     // get messages from current room querry
-    console.log("CHat room route", this.$route.params.id);
     this.$store.dispatch("getCurrentChatRoomMessages", this.currentRoomId);
   },
   mounted() {
     this.socket = io("localhost:4000");
     this.socket.emit("joinRoom", this.currentRoomId);
-    this.socket.on("message", data => {
-      console.log(data);
-      // this.props.addMessage(data);
-      // this.scrollChatToBot();
+    this.socket.on("getMessage", data => {
+      console.log("messageChatRoom", data);
+      // this.$store.dispatch("sendChatMessage", data);
     });
     this.socket.on("editMessage", async data => {
       // await this.props.replaceMessage({

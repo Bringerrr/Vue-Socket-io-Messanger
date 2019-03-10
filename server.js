@@ -67,7 +67,7 @@ io.on("connection", function(socket) {
     // let _id = await chat.setMessage(message_data.text, message_data.name);
     // message_data._id = _id;
     console.log(message_data);
-    socket.broadcast.emit("message", message_data);
+    socket.broadcast.emit("getMessage", message_data);
   });
 
   socket.on("editMessage", async message_data => {

@@ -42,12 +42,9 @@ export default new Vuex.Store({
       state.currentChatRoomMessages = payload;
     },
     setChatMessage: (state, payload) => {
-      console.log("setChatMessage before", state.currentChatRoomMessages);
       state.currentChatRoomMessages.push(payload);
-      console.log("setChatMessage after", state.currentChatRoomMessages);
     },
     setUser: (state, payload) => {
-      console.log("setUserVuex_Pyaload", payload);
       state.user = payload;
     },
     setLoading: (state, payload) => {
@@ -66,7 +63,6 @@ export default new Vuex.Store({
   actions: {
     addPublicChatRoom: ({ commit }, payload) => {
       commit("setLoading", true);
-      console.log(payload);
       apolloClient
         .mutate({
           mutation: ADD_PUBLIC_CHAT_ROOM,
@@ -74,7 +70,6 @@ export default new Vuex.Store({
         })
         .then(({ data }) => {
           commit("setLoading", false);
-          console.log("ADD_PUBLIC_CHAT_ROOM", data);
         })
         .catch(err => {
           commit("setLoading", false);
@@ -90,7 +85,6 @@ export default new Vuex.Store({
         .then(({ data }) => {
           commit("setLoading", false);
           commit("setChatRooms", data.getPublicChatRooms);
-          console.log(data);
         })
         .catch(err => {
           commit("setLoading", false);
@@ -99,7 +93,6 @@ export default new Vuex.Store({
     },
     sendChatMessage: ({ state, commit }, payload) => {
       commit("setLoading", true);
-      console.log("sendChatMessage_payload", payload);
       apolloClient
         .mutate({
           mutation: SEND_CHAT_MESSAGE,
@@ -115,8 +108,6 @@ export default new Vuex.Store({
           //   ]
           // };
           commit("setChatMessage", data.sendChatMessage);
-          console.log("newChatMessages", data.sendChatMessage);
-          console.log(data);
         })
         .catch(err => {
           commit("setLoading", false);
@@ -126,7 +117,6 @@ export default new Vuex.Store({
 
     getCurrentChatRoomMessages: ({ commit }, payload) => {
       commit("setLoading", true);
-      console.log("payload", payload);
       apolloClient
         .query({
           query: GET_CURRENT_CHAT_ROOM_MESSAGES,
@@ -135,7 +125,6 @@ export default new Vuex.Store({
         .then(({ data }) => {
           commit("setLoading", false);
           commit("setCurrentChatRoomMessages", data.getCurrentChatRoomMessages);
-          console.log(data);
         })
         .catch(err => {
           commit("setLoading", false);
@@ -143,7 +132,6 @@ export default new Vuex.Store({
         });
     },
     getCurrentUser: async ({ commit }) => {
-      console.log("gsu store");
       commit("setLoading", true);
       apolloClient
         .query({
@@ -154,7 +142,6 @@ export default new Vuex.Store({
           commit("setLoading", false);
           // Add user data to state
           commit("setUser", data.getCurrentUser);
-          console.log(data.getCurrentUser);
         })
         .catch(err => {
           commit("setLoading", false);
@@ -180,8 +167,6 @@ export default new Vuex.Store({
     signinUser: async ({ commit }, payload) => {
       commit("clearError");
       commit("setLoading", true);
-
-      console.log("SIGNIN_PAYLOAD", payload);
       apolloClient
         .mutate({
           mutation: SIGNIN_USER,

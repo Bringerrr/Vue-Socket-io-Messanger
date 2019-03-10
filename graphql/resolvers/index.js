@@ -19,8 +19,6 @@ const rootResolver = {
       req.body.variables.token,
       process.env.SECRET
     );
-
-    console.log("getCurrentUser", currentUser);
     const { username } = currentUser;
 
     const user = await User.findOne({
@@ -33,12 +31,10 @@ const rootResolver = {
     return chatRooms;
   },
   getCurrentChatRoomMessages: async (ars, req) => {
-    console.log("getCurrentChatRoomMessages", req.body.variables.roomId);
     const { roomId } = req.body.variables;
     const currentChatRoom = await ChatRoom.findById(roomId)
       .populate({ path: "messages", model: ChatMessage })
       .lean();
-
     // rewrite Date into local date string
     currentChatRoom.messages.map(message => {
       message.createdDate = dateToString(message.createdDate);
@@ -57,7 +53,6 @@ const rootResolver = {
     return posts;
   },
   sendChatMessage: async (args, req) => {
-    console.log("SET MESSAGE");
     try {
       const inputMessage = await new ChatMessage({
         userid: req.body.variables.userid,
@@ -77,15 +72,12 @@ const rootResolver = {
           if (err) {
             console.log("Something wrong when updating data!");
           }
-          console.log(doc);
         });
 
       if (req.body.variables.userid === undefined) {
-        console.log("");
         return false;
       }
       await inputMessage.save();
-      console.log(inputMessage);
       return inputMessage;
     } catch (err) {
       console.log("I am a tea spot: ", err);
@@ -119,21 +111,10 @@ const rootResolver = {
     return newPublicChatRoom;
   },
   signinUser: async (args, req) => {
-    // const user = await User.findOne({ username });
-    // if (!user) {
-    //   throw new Error("User not found");
-    // }
-    // const isValidPassword = await bcrypt.compare(password, user.password);
-    // if (!isValidPassword) {
-    //   throw new Error("Invalid password");
-    // }
-    // return { token: createToken(user, process.env.SECRET, "1hr") };
-
     const user = await User.findOne({ username: req.body.variables.username });
     if (!user) {
       throw new Error("User not found");
     }
-    console.log(req.body.variables.password);
     const isValidPassword = await bcryptjs.compare(
       req.body.variables.password,
       user.password
@@ -142,7 +123,6 @@ const rootResolver = {
       throw new Error("Invalid password");
     }
     const token = await { token: createToken(user, process.env.SECRET, "1hr") };
-    // console.log("Sign_In_Token", createToken(user, process.env.SECRET, "1hr"));
     // let token = null;
     return token;
   },
