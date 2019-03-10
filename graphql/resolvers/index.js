@@ -94,21 +94,27 @@ const rootResolver = {
     return newPost;
   },
   addPublicChatRoom: async (args, req) => {
-    const newPublicChatRoom = await new ChatRoom({
-      participants: [req.body.creatorId],
-      private: req.body.private,
-      title: req.body.title,
-      description: req.body.description,
-      createdBy: req.body.creatorId
-    }).save();
-    const newPublicChatRoomId = newPublicChatRoom._id;
-    const user = await User.findById(creatorId);
-    if (!user) {
-      throw new Error("User not found");
+    console.log("addPublicChatRoom", req.body.variables);
+
+    try {
+      const newPublicChatRoom = await new ChatRoom({
+        participants: [req.body.variables.userid],
+        private: true,
+        title: req.body.variables.title,
+        description: req.body.variables.description,
+        createdBy: req.body.variables.userid
+      }).save();
+      const newPublicChatRoomId = newPublicChatRoom._id;
+      const user = await User.findById(req.body.variables.userid);
+      if (!user) {
+        throw new Error("User not found");
+      }
+      user.chatRooms.push(newPublicChatRoomId);
+      user.save();
+      return newPublicChatRoom;
+    } catch (err) {
+      console.log("addPublicChatRoom", err);
     }
-    user.chatRooms.push(newPublicChatRoomId);
-    user.save();
-    return newPublicChatRoom;
   },
   signinUser: async (args, req) => {
     const user = await User.findOne({ username: req.body.variables.username });
@@ -127,15 +133,15 @@ const rootResolver = {
     return token;
   },
   signupUser: async (args, req) => {
-    const username = req.body.username;
+    const username = req.body.variables.username;
     const user = await User.findOne({ username });
     if (user) {
       throw new Error("User already exists");
     }
     const newUser = await new User({
-      username: req.body.username,
-      email: req.body.email,
-      password: req.body.password
+      username: req.body.variables.username,
+      email: req.body.variables.email,
+      password: req.body.variables.password
     }).save();
     return { token: createToken(newUser, process.env.SECRET, "2hr") };
   }

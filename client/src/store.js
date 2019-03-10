@@ -35,6 +35,9 @@ export default new Vuex.Store({
     setPosts: (state, payload) => {
       state.posts = payload;
     },
+    setChatRoom: (state, payload) => {
+      state.chatRooms.unshift(payload);
+    },
     setChatRooms: (state, payload) => {
       state.chatRooms = payload;
     },
@@ -69,6 +72,7 @@ export default new Vuex.Store({
           variables: payload
         })
         .then(({ data }) => {
+          commit("setChatRoom", data.addPublicChatRoom);
           commit("setLoading", false);
         })
         .catch(err => {

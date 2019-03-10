@@ -18,13 +18,11 @@ const chatShema = new mongoose.Schema({
     type: Boolean,
     required: true
   },
-  participants: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true
-    }
-  ],
+  participants: {
+    type: [mongoose.Schema.Types.ObjectId],
+    ref: "User",
+    required: true
+  },
   createdDate: {
     type: Date,
     default: Date.now
