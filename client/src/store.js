@@ -41,6 +41,11 @@ export default new Vuex.Store({
     setCurrentChatRoomMessages: (state, payload) => {
       state.currentChatRoomMessages = payload;
     },
+    setChatMessage: (state, payload) => {
+      console.log("setChatMessage before", state.currentChatRoomMessages);
+      state.currentChatRoomMessages.push(payload);
+      console.log("setChatMessage after", state.currentChatRoomMessages);
+    },
     setUser: (state, payload) => {
       console.log("setUserVuex_Pyaload", payload);
       state.user = payload;
@@ -92,17 +97,25 @@ export default new Vuex.Store({
           console.error(err);
         });
     },
-    sendChatMessage: ({ commit }, payload) => {
+    sendChatMessage: ({ state, commit }, payload) => {
       commit("setLoading", true);
       console.log("sendChatMessage_payload", payload);
       apolloClient
         .mutate({
-          query: SEND_CHAT_MESSAGE,
-          variables: { roomId: payload }
+          mutation: SEND_CHAT_MESSAGE,
+          variables: payload
         })
         .then(({ data }) => {
           commit("setLoading", false);
-          commit("setCurrentChatRoomMessages", data.getCurrentChatRoomMessages);
+          // const { currentChatRoomMessages } = state;
+          // const newChatMessages = {
+          //   currentChatRoomMessages: [
+          //     ...currentChatRoomMessages,
+          //     data.sendChatMessage
+          //   ]
+          // };
+          commit("setChatMessage", data.sendChatMessage);
+          console.log("newChatMessages", data.sendChatMessage);
           console.log(data);
         })
         .catch(err => {
@@ -148,18 +161,6 @@ export default new Vuex.Store({
           console.error(err);
         });
       commit("setLoading", true);
-      // const data = await axios.post("http://localhost:4000/graphql", {
-      //   query: GET_CURRENT_USER,
-      //   token: localStorage.getItem("token")
-      // });
-      // try {
-      //   const getData = await data;
-      //   commit("setUser", getData);
-      //   commit("setLoading", false);
-      // } catch (err) {
-      //   commit("setLoading", false);
-      //   console.error(err);
-      // }
     },
     getPosts: ({ commit }) => {
       commit("setLoading", true);
@@ -197,32 +198,6 @@ export default new Vuex.Store({
           commit("setError", err);
           console.error(err);
         });
-      // commit("clearError");
-      // commit("setLoading", true);
-      // const token = localStorage.getItem("token");
-
-      // const dataGet = await axios.post("http://localhost:4000/graphql", {
-      //   query: SIGNIN_USER,
-      //   variables: payload,
-      //   token: token
-      // });
-
-      // console.log("dataGet", dataGet.data.data);
-      // alert(dataGet);
-
-      // try {
-      //   const data = dataGet;
-      //   console.log("SIGNIN_USER", data);
-      //   alert(data.signinUser);
-      //   commit("setLoading", false);
-      //   localStorage.setItem("token", dataGet.data.data.signinUser.token);
-      //   // to make sure created method is run in main.js (we run getCurrentUser), reload the page
-      //   router.go();
-      // } catch (err) {
-      //   commit("setLoading", false);
-      //   commit("setError", err);
-      //   console.error(err);
-      // }
     },
     signupUser: ({ commit }, payload) => {
       commit("clearError");

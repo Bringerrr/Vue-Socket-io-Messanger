@@ -18,7 +18,7 @@
           <v-subheader>Recent chat</v-subheader>
           <v-list-tile
             v-for="item in currentChatRoomMessages"
-            :key="item.message"
+            :key="item._id"
             avatar
             @click.prevent
           >
@@ -84,15 +84,18 @@ export default {
   },
   methods: {
     sendMessage() {
-      this.socket.emit("message", "MESSSSAAAGE FROM CHAT");
-      console.log(this.$store.state.user);
-      // this.items.push({
-      //   active: true,
-      //   message: this.message,
-      //   avatar: "https://cdn.vuetifyjs.com/images/lists/1.jpg"
-      // });
+      this.socket.emit("message", this.message);
+      const payload = {
+        roomId: this.currentRoomId,
+        userid: this.user._id,
+        username: this.user.username,
+        message: this.message
+      };
+      this.$store.dispatch("sendChatMessage", payload);
+      console.log("message payload", payload);
 
-      // this.message = "";
+      this.message = "";
+      console.log("currentChatRoomMessages", this.currentChatRoomMessages);
     }
   },
   watch: {

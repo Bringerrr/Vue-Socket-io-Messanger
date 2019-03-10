@@ -97,9 +97,15 @@ export const ADD_PUBLIC_CHAT_ROOM = gql`
 `;
 
 export const SEND_CHAT_MESSAGE = gql`
-  mutation($userid: ID!, $message: String!, $username: String!) {
-    sendChatMessage(userid: $userid, message: $message, username: $username) {
+  mutation($userid: ID!, $message: String!, $roomId: ID!, $username: String!) {
+    sendChatMessage(
+      userid: $userid
+      message: $message
+      roomId: $roomId
+      username: $username
+    ) {
       userid
+      username
       message
     }
   }
