@@ -58,6 +58,7 @@ const rootResolver = {
         userid: req.body.variables.userid,
         username: req.body.variables.username,
         message: req.body.variables.message,
+        avatar: req.body.variables.avatar,
         deleted: false
       });
       const messageid = inputMessage._id;
@@ -68,7 +69,7 @@ const rootResolver = {
         { new: true }
       )
         .lean()
-        .exec((err, doc) => {
+        .exec((err, data) => {
           if (err) {
             console.log("Something wrong when updating data!");
           }

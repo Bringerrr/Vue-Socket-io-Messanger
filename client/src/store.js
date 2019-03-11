@@ -95,7 +95,7 @@ export default new Vuex.Store({
           console.error(err);
         });
     },
-    sendChatMessage: ({ state, commit }, payload) => {
+    sendChatMessage: ({ commit }, payload) => {
       commit("setLoading", true);
       apolloClient
         .mutate({
@@ -104,13 +104,7 @@ export default new Vuex.Store({
         })
         .then(({ data }) => {
           commit("setLoading", false);
-          // const { currentChatRoomMessages } = state;
-          // const newChatMessages = {
-          //   currentChatRoomMessages: [
-          //     ...currentChatRoomMessages,
-          //     data.sendChatMessage
-          //   ]
-          // };
+          console.log("sendChatMessage", data.sendChatMessage);
           commit("setChatMessage", data.sendChatMessage);
         })
         .catch(err => {
@@ -118,7 +112,13 @@ export default new Vuex.Store({
           console.error(err);
         });
     },
-
+    setChatMessage: ({ commit }, payload) => {
+      try {
+        commit("setChatMessage", payload);
+      } catch (err) {
+        console.error(err);
+      }
+    },
     getCurrentChatRoomMessages: ({ commit }, payload) => {
       commit("setLoading", true);
       apolloClient

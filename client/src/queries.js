@@ -53,6 +53,7 @@ export const GET_CURRENT_CHAT_ROOM_MESSAGES = gql`
       userid
       username
       message
+      avatar
       deleted
       createdDate
     }
@@ -107,6 +108,7 @@ export const SEND_CHAT_MESSAGE = gql`
       userid
       username
       message
+      avatar
     }
   }
 `;

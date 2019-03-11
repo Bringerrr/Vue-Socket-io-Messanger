@@ -38,6 +38,7 @@ type User {
     _id: ID!
     userid: ID!
     username: String!
+    avatar: String
     message: String!
     deleted: Boolean!
     createdDate: String!
@@ -68,7 +69,7 @@ type User {
       description: String!
       creatorId: ID!
     ): Post!
-    sendChatMessage(userid: ID!, roomId:ID!, username: String!, message: String!): ChatMessage
+    sendChatMessage(userid: ID!, roomId:ID!, username: String!, avatar: String, message: String!): ChatMessage
     addPublicChatRoom(
       private: Boolean!
       creatorId: ID!

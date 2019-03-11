@@ -14,6 +14,10 @@ const chatShema = new mongoose.Schema({
     type: String,
     required: true
   },
+  avatar: {
+    type: String,
+    require: false
+  },
   deleted: {
     type: Boolean,
     required: false

@@ -55,19 +55,27 @@ const server = app.listen(process.env.PORT, () => {
 
 const io = require("socket.io")(server);
 const sockets = [];
+const rooms = [];
 io.on("connection", function(socket) {
   sockets.push(socket);
   // console.log("sockets online after connection : ", sockets);
   console.log("socket connected : " + socket.id);
   socket.on("joinRoom", async roomid => {
-    socket.join(roomid);
+    socket.join(roomid, () => {
+      let rooms = Object.keys(socket.rooms);
+      io.to(roomid).emit(`a new user has joined the room ${roomid}`);
+    });
     console.log(`socket ${socket.id} joined room ${roomid}`);
   });
-  socket.on("message", async message_data => {
-    // let _id = await chat.setMessage(message_data.text, message_data.name);
-    // message_data._id = _id;
-    console.log(message_data);
-    socket.broadcast.emit("getMessage", message_data);
+  socket.on("leaveRoom", async roomid => {
+    socket.leave(roomid, () => {
+      let rooms = Object.keys(socket.rooms);
+      io.to(roomid).emit(`a user has left the room ${roomid}`);
+    });
+    console.log(`socket ${socket.id} left room ${roomid}`);
+  });
+  socket.on("message", async data => {
+    io.to(data.roomId).emit("getMessage", data);
   });
 
   socket.on("editMessage", async message_data => {

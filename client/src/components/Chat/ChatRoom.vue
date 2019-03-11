@@ -84,13 +84,14 @@ export default {
   },
   methods: {
     sendMessage() {
-      this.socket.emit("message", this.message);
       const payload = {
         roomId: this.currentRoomId,
         userid: this.user._id,
         username: this.user.username,
+        avatar: this.user.avatar,
         message: this.message
       };
+      this.socket.emit("message", payload);
       this.$store.dispatch("sendChatMessage", payload);
       console.log("message payload", payload);
 
@@ -113,8 +114,10 @@ export default {
     this.socket = io("localhost:4000");
     this.socket.emit("joinRoom", this.currentRoomId);
     this.socket.on("getMessage", data => {
+      console.log(this.user);
       console.log("messageChatRoom", data);
-      // this.$store.dispatch("sendChatMessage", data);
+
+      this.$store.dispatch("setChatMessage", data);
     });
     this.socket.on("editMessage", async data => {
       // await this.props.replaceMessage({
