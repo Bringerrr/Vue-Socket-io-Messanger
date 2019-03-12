@@ -9,6 +9,7 @@ type User {
     avatar: String
     joinDate: String
     favorites: [Post]
+    correspondence: [Correspondence]
   }
   
   type Post {
@@ -29,6 +30,12 @@ type User {
     messageDate: String
     messageUser: User!
   }
+
+  type Correspondence{
+    _id: ID
+    messages: [String]
+    participants: [String]
+  }
   
   type Token {
     token: String!
@@ -41,6 +48,7 @@ type User {
     avatar: String
     message: String!
     deleted: Boolean!
+    private: Boolean!
     createdDate: String!
   }
   
@@ -56,6 +64,7 @@ type User {
 
   type Query {
     getCurrentUser: User
+    getCurrentUserPrivateMessages(username:String!): User
     getPosts: [Post]
     getPublicChatRooms: [ChatRoom]
     getCurrentChatRoomMessages(roomId:ID!): [ChatMessage]
@@ -69,7 +78,8 @@ type User {
       description: String!
       creatorId: ID!
     ): Post!
-    sendChatMessage(userid: ID!, roomId:ID!, username: String!, avatar: String, message: String!): ChatMessage
+    sendChatMessage(userid: ID!, anotheruserid: ID, roomId:ID!, username: String!, avatar: String, message: String!, private: Boolean!): ChatMessage
+    sendPrivateMessage(userid: ID!, anotheruserid: ID, roomId:ID!, username: String!, avatar: String, message: String!, private: Boolean!): ChatMessage
     addPublicChatRoom(
       private: Boolean!
       creatorId: ID!

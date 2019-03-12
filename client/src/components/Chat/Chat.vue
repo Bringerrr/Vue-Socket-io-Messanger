@@ -7,7 +7,7 @@
         </v-toolbar>
 
         <v-list subheader>
-          <v-subheader>Recent chat</v-subheader>
+          <v-subheader>Private messages</v-subheader>
           <v-list-tile v-for="item in items" :key="item.title" avatar @click.prevent>
             <v-list-tile-avatar>
               <img :src="item.avatar">
@@ -26,7 +26,7 @@
         <v-divider></v-divider>
 
         <v-list subheader>
-          <v-subheader>Test chats</v-subheader>
+          <v-subheader>Chat Rooms</v-subheader>
 
           <v-list-tile v-for="room in chatRooms" :key="room._id" @click.prevent="routeTo(room._id)">
             <div>{{room.description}}</div>

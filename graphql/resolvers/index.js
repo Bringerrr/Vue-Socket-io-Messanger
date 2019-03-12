@@ -5,6 +5,7 @@ const User = require("../../models/User");
 const Post = require("../../models/Post");
 const ChatMessage = require("../../models/ChatMessage");
 const ChatRoom = require("../../models/ChatRoom");
+const Correspondence = require("../../models/Correspondence");
 
 const { dateToString } = require("../../helpers/date");
 
@@ -24,6 +25,19 @@ const rootResolver = {
     const user = await User.findOne({
       username: username
     });
+    return user;
+  },
+  getCurrentUserPrivateMessages: async (args, req) => {
+    const user = await User.findOne({
+      username: req.body.variables.username
+    })
+      .populate({
+        path: "correspondence",
+        model: Correspondence
+        // populate: { path: "participants", model: User }
+      })
+      .lean();
+    console.log("user", user);
     return user;
   },
   getPublicChatRooms: async args => {
@@ -59,6 +73,7 @@ const rootResolver = {
         username: req.body.variables.username,
         message: req.body.variables.message,
         avatar: req.body.variables.avatar,
+        private: req.body.variables.private,
         deleted: false
       });
       const messageid = inputMessage._id;
@@ -82,6 +97,70 @@ const rootResolver = {
       return inputMessage;
     } catch (err) {
       console.log("I am a tea spot: ", err);
+    }
+  },
+  sendPrivateMessage: async (args, req) => {
+    try {
+      const inputMessage = await new ChatMessage({
+        userid: req.body.variables.userid,
+        username: req.body.variables.username,
+        message: req.body.variables.message,
+        avatar: req.body.variables.avatar,
+        private: req.body.variables.private,
+        deleted: false
+      });
+
+      await Correspondence.findOne(
+        {
+          participants: [
+            req.body.variables.userid,
+            req.body.variables.anotheruserid
+          ]
+        },
+        async (err, data) => {
+          if (err) {
+            console.log("CorrespondenceError", err);
+          }
+          // if querry don't find correspondence between two users
+          if (data === null) {
+            // create new correspondence
+            const newCorrespondence = await new Correspondence({
+              participants: [
+                req.body.variables.userid,
+                req.body.variables.anotheruserid
+              ],
+              messages: [inputMessage._id]
+            });
+            newCorrespondence.save();
+
+            // find users and push to their correspondences new ones
+            User.find({
+              _id: [req.body.variables.userid, req.body.variables.anotheruserid]
+            }).exec((err, data) => {
+              if (err) {
+                console.log("userFoundError", err);
+              }
+              data.forEach(user => {
+                user.correspondence.push(newCorrespondence._id);
+                user.save();
+                console.log(user);
+              });
+            });
+          }
+          if (data !== null) {
+            data.messages.push(inputMessage._id);
+            data.save(function(err) {
+              if (err) {
+                console.error("ERROR!");
+              }
+            });
+          }
+        }
+      );
+      await inputMessage.save();
+      return inputMessage;
+    } catch (err) {
+      console.log("PrivateMessageSent", err);
     }
   },
   addPost: async (args, req) => {
@@ -144,7 +223,7 @@ const rootResolver = {
       email: req.body.variables.email,
       password: req.body.variables.password
     }).save();
-    return { token: createToken(newUser, process.env.SECRET, "2hr") };
+    return { token: createToken(newUser, process.env.SECRET, "1hr") };
   }
 };
 

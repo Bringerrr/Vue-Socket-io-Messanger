@@ -104,8 +104,8 @@ export default new Vuex.Store({
         })
         .then(({ data }) => {
           commit("setLoading", false);
-          console.log("sendChatMessage", data.sendChatMessage);
-          commit("setChatMessage", data.sendChatMessage);
+          // console.log("sendChatMessage", data.sendChatMessage);
+          // commit("setChatMessage", data.sendChatMessage);
         })
         .catch(err => {
           commit("setLoading", false);

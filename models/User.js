@@ -35,6 +35,11 @@ const UserSchema = new mongoose.Schema({
     type: [mongoose.Schema.Types.ObjectId],
     required: false,
     ref: "ChatRoom"
+  },
+  correspondence: {
+    type: [mongoose.Schema.Types.ObjectId],
+    required: false,
+    ref: "ChatRoom"
   }
 });
 

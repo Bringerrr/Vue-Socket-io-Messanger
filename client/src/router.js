@@ -15,7 +15,7 @@ import AuthGuard from "./AuthGuard";
 
 Vue.use(Router);
 
-export default new Router({
+const router = new Router({
   mode: "history",
   // base: process.env.BASE_URL,
   routes: [
@@ -32,7 +32,8 @@ export default new Router({
     {
       path: "/post/add",
       name: "AddPost",
-      component: AddPost
+      component: AddPost,
+      beforeEnter: AuthGuard
     },
     {
       path: "/profile",
@@ -53,8 +54,11 @@ export default new Router({
     {
       path: "/Chat",
       name: "Chat",
-      component: Chat
+      component: Chat,
+      beforeEnter: AuthGuard
     },
     { path: "/Chat/:id", component: ChatRoom }
   ]
 });
+
+export default router;

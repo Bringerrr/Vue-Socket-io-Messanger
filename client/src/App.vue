@@ -13,13 +13,22 @@
 
       <!-- Side Navbar Links -->
       <v-list>
+        <v-list-tile avatar v-if="user">
+          <v-list-tile-avatar>
+            <img :src="user.avatar">
+          </v-list-tile-avatar>
+
+          <v-list-tile-content>
+            <v-list-tile-title>{{user.username}}</v-list-tile-title>
+          </v-list-tile-content>
+        </v-list-tile>
+
         <v-list-tile ripple v-for="item in sideNavItems" :key="item.title" :to="item.link">
           <v-list-tile-action>
             <v-icon>{{item.icon}}</v-icon>
           </v-list-tile-action>
           <v-list-tile-content>{{item.title}}</v-list-tile-content>
         </v-list-tile>
-
         <!-- Signout Button -->
         <v-list-tile v-if="user" @click="handleSignoutUser">
           <v-list-tile-action>

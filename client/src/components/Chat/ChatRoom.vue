@@ -1,6 +1,6 @@
-<template>
+<template >
   <v-layout row>
-    <v-flex xs12 sm6 offset-sm3>
+    <v-flex xs12>
       <v-card>
         <v-toolbar color="teal" dark>
           <v-toolbar-side-icon></v-toolbar-side-icon>
@@ -14,9 +14,10 @@
           </v-btn>
         </v-toolbar>
 
-        <v-list subheader>
+        <v-list ref="chatcontainer" class="Chat-Container" id="scroll-target" subheader>
           <v-subheader>Recent chat</v-subheader>
           <v-list-tile
+            v-scroll:#scroll-target="onScroll"
             v-for="item in currentChatRoomMessages"
             :key="item._id"
             avatar
@@ -27,12 +28,9 @@
             </v-list-tile-avatar>
 
             <v-list-tile-content>
-              <v-list-tile-title class="Private-Message" v-html="item.message"></v-list-tile-title>
+              <v-list-tile-title v-html="item.username"></v-list-tile-title>
+              <v-list-tile-sub-title v-html="item.message"></v-list-tile-sub-title>
             </v-list-tile-content>
-
-            <v-list-tile-action>
-              <v-icon :color="item.active ? 'teal' : 'grey'">chat_bubble</v-icon>
-            </v-list-tile-action>
           </v-list-tile>
         </v-list>
 
@@ -83,19 +81,28 @@ export default {
     };
   },
   methods: {
-    sendMessage() {
+    scrollToBot(elem) {
+      console.log("scrolled to Bot", elem);
+      elem.scrollTop = elem.scrollHeight - elem.clientHeight;
+    },
+    async sendMessage() {
       const payload = {
         roomId: this.currentRoomId,
         userid: this.user._id,
         username: this.user.username,
         avatar: this.user.avatar,
-        message: this.message
+        message: this.message,
+        private: false
       };
       this.socket.emit("message", payload);
-      this.$store.dispatch("sendChatMessage", payload);
-      console.log("message payload", payload);
-
+      await this.$store.dispatch("sendChatMessage", payload);
       this.message = "";
+    },
+    onScroll(e) {
+      console.log("onScroll", e.target.scrollTop);
+    },
+    handleScroll(e) {
+      console.log("HandleOnScroll", e.target.scrollTop);
     }
   },
   watch: {
@@ -106,18 +113,21 @@ export default {
   computed: {
     ...mapGetters(["loading", "user", "currentChatRoomMessages"])
   },
-  created() {
+  async created() {
     // get messages from current room querry
-    this.$store.dispatch("getCurrentChatRoomMessages", this.currentRoomId);
+
+    await this.$store.dispatch(
+      "getCurrentChatRoomMessages",
+      this.currentRoomId
+    );
+    this.scrollToBot(this.$refs.chatcontainer.$el);
   },
   mounted() {
     this.socket = io("localhost:4000");
     this.socket.emit("joinRoom", this.currentRoomId);
-    this.socket.on("getMessage", data => {
-      console.log(this.user);
-      console.log("messageChatRoom", data);
-
-      this.$store.dispatch("setChatMessage", data);
+    this.socket.on("getMessage", async data => {
+      await this.$store.dispatch("setChatMessage", data);
+      this.scrollToBot(this.$refs.chatcontainer.$el);
     });
     this.socket.on("editMessage", async data => {
       // await this.props.replaceMessage({
@@ -139,8 +149,19 @@ export default {
 </script>
 
 <style>
+/* .v-list__tile__content {
+  flex: none;
+} */
+.Chat-Component {
+}
 .Private-Message {
   border-radius: 0px 0 20px 0;
   padding-left: 20px;
+  align-self: flex-start;
+}
+.Chat-Container {
+  overflow: hidden;
+  overflow-y: scroll;
+  height: 60vh;
 }
 </style>
