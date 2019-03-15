@@ -1,7 +1,7 @@
 const { buildSchema } = require("graphql");
 
 module.exports = buildSchema(`
-type User {
+  type User {
     _id: ID
     username: String! @unique
     email: String!
@@ -33,8 +33,9 @@ type User {
 
   type Correspondence{
     _id: ID
-    messages: [String]
-    participants: [String]
+    messages: [ChatMessage]
+    participants: [User]
+    anotheruser: User
   }
   
   type Token {
@@ -64,7 +65,8 @@ type User {
 
   type Query {
     getCurrentUser: User
-    getCurrentUserPrivateMessages(username:String!): User
+    getCurrentUserCorrespondence: [Correspondence]
+    getCurrentUserCorrespondenceMessages: [ChatMessage]
     getPosts: [Post]
     getPublicChatRooms: [ChatRoom]
     getCurrentChatRoomMessages(roomId:ID!): [ChatMessage]

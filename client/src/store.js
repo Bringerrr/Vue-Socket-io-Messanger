@@ -2,12 +2,12 @@ import Vue from "vue";
 import Vuex from "vuex";
 import router from "./router";
 
-import axios from "axios";
-
 import { defaultClient as apolloClient } from "./main";
 
 import {
   GET_CURRENT_USER,
+  GET_CURRENT_USER_CORRESPONDENCE,
+  GET_CURRENT_USER_CORRESPONDENCE_MESSAGES,
   GET_POSTS,
   SIGNIN_USER,
   SIGNUP_USER,
@@ -23,10 +23,12 @@ Vue.use(Vuex);
 export default new Vuex.Store({
   state: {
     posts: [],
-    chatRooms: [],
+    publicChatRooms: [],
     currentChatRoomMessages: [],
     chat: [],
     user: null,
+    currentUserCorrespondence: [],
+    currentUserCorrespondenceMessages: [],
     loading: false,
     error: null,
     authError: null
@@ -36,19 +38,34 @@ export default new Vuex.Store({
       state.posts = payload;
     },
     setChatRoom: (state, payload) => {
-      state.chatRooms.unshift(payload);
+      state.publicChatRooms.unshift(payload);
     },
-    setChatRooms: (state, payload) => {
-      state.chatRooms = payload;
+    setPublicChatRooms: (state, payload) => {
+      state.publicChatRooms = payload;
     },
     setCurrentChatRoomMessages: (state, payload) => {
       state.currentChatRoomMessages = payload;
+      console.log("setCurrentChatRoomMessages", state.currentChatRoomMessages);
     },
     setChatMessage: (state, payload) => {
       state.currentChatRoomMessages.push(payload);
     },
     setUser: (state, payload) => {
       state.user = payload;
+    },
+    setAnotherUser: (state, payload) => {
+      state.anotheruser = payload;
+      console.log("setAnotherUser", state.anotheruser);
+    },
+    setCurrentUserCorrespondence: (state, payload) => {
+      state.currentUserCorrespondence = payload;
+    },
+    setCurrentUserCorrespondenceMessages: (state, payload) => {
+      state.currentUserCorrespondenceMessages = payload;
+      console.log(
+        "setCurrentUserCorrespondenceMessages",
+        state.currentUserCorrespondenceMessages
+      );
     },
     setLoading: (state, payload) => {
       state.loading = payload;
@@ -61,7 +78,7 @@ export default new Vuex.Store({
     },
     clearUser: state => (state.user = null),
     clearError: state => (state.error = null),
-    clearChatRooms: state => (state.chatRooms = null)
+    clearPublicChatRooms: state => (state.publicChatRooms = null)
   },
   actions: {
     addPublicChatRoom: ({ commit }, payload) => {
@@ -72,8 +89,9 @@ export default new Vuex.Store({
           variables: payload
         })
         .then(({ data }) => {
-          commit("setChatRoom", data.addPublicChatRoom);
+          commit("setPublicChatRoom", data.addPublicChatRoom);
           commit("setLoading", false);
+          router.push(`/chat/chatroom/${data.addPublicChatRoom._id}`);
         })
         .catch(err => {
           commit("setLoading", false);
@@ -88,7 +106,7 @@ export default new Vuex.Store({
         })
         .then(({ data }) => {
           commit("setLoading", false);
-          commit("setChatRooms", data.getPublicChatRooms);
+          commit("setPublicChatRooms", data.getPublicChatRooms);
         })
         .catch(err => {
           commit("setLoading", false);
@@ -135,6 +153,30 @@ export default new Vuex.Store({
           console.error(err);
         });
     },
+    getCurrentUserCorrespondenceMessages: ({ commit }, payload) => {
+      console.log("getCurrentUserCorrespondenceMessagespayload", payload);
+      commit("setLoading", true);
+      apolloClient
+        .query({
+          query: GET_CURRENT_USER_CORRESPONDENCE_MESSAGES,
+          variables: payload
+        })
+        .then(({ data }) => {
+          console.log(
+            "getCurrentUserCorrespondenceMessages",
+            data.getCurrentUserCorrespondenceMessages
+          );
+          commit("setLoading", false);
+          commit(
+            "setCurrentUserCorrespondenceMessages",
+            data.getCurrentUserCorrespondenceMessages
+          );
+        })
+        .catch(err => {
+          commit("setLoading", false);
+          console.error(err);
+        });
+    },
     getCurrentUser: async ({ commit }) => {
       commit("setLoading", true);
       apolloClient
@@ -146,6 +188,26 @@ export default new Vuex.Store({
           commit("setLoading", false);
           // Add user data to state
           commit("setUser", data.getCurrentUser);
+        })
+        .catch(err => {
+          commit("setLoading", false);
+          console.error(err);
+        });
+      commit("setLoading", true);
+    },
+    getCurrentUserCorrespondence: async ({ commit }) => {
+      commit("setLoading", true);
+      apolloClient
+        .query({
+          query: GET_CURRENT_USER_CORRESPONDENCE,
+          variables: { token: localStorage.getItem("token") }
+        })
+        .then(({ data }) => {
+          commit("setLoading", false);
+          commit(
+            "setCurrentUserCorrespondence",
+            data.getCurrentUserCorrespondence
+          );
         })
         .catch(err => {
           commit("setLoading", false);
@@ -221,11 +283,15 @@ export default new Vuex.Store({
   },
   getters: {
     posts: state => state.posts,
-    currentChatRoomMessages: state => state.currentChatRoomMessages,
     user: state => state.user,
+    anotheruser: state => state.anotheruser,
+    currentUserCorrespondence: state => state.currentUserCorrespondence,
+    currentUserCorrespondenceMessages: state =>
+      state.currentUserCorrespondenceMessages,
+    currentChatRoomMessages: state => state.currentChatRoomMessages,
     loading: state => state.loading,
     error: state => state.error,
     authError: state => state.authError,
-    chatRooms: state => state.chatRooms
+    publicChatRooms: state => state.publicChatRooms
   }
 });

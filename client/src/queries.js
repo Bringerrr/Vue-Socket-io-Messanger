@@ -30,6 +30,23 @@ export const GET_CURRENT_USER = gql`
   }
 `;
 
+export const GET_CURRENT_USER_CORRESPONDENCE = gql`
+  query {
+    getCurrentUserCorrespondence {
+      _id
+      messages {
+        _id
+        username
+        message
+      }
+      anotheruser {
+        _id
+        username
+        avatar
+      }
+    }
+  }
+`;
 /* Chat Queries   */
 
 export const GET_PUBLIC_CHAT_ROOMS = gql`
@@ -55,6 +72,20 @@ export const GET_CURRENT_CHAT_ROOM_MESSAGES = gql`
       message
       avatar
       deleted
+      createdDate
+    }
+  }
+`;
+
+export const GET_CURRENT_USER_CORRESPONDENCE_MESSAGES = gql`
+  query {
+    getCurrentUserCorrespondenceMessages {
+      _id
+      userid
+      username
+      message
+      deleted
+      avatar
       createdDate
     }
   }
@@ -117,6 +148,32 @@ export const SEND_CHAT_MESSAGE = gql`
       message
       avatar
       private
+    }
+  }
+`;
+
+export const SEND_PRIVATE_CHAT_MESSAGE = gql`
+  mutation(
+    $private: Boolean!
+    $userid: ID!
+    $anotheruserid: ID
+    $message: String!
+    $roomId: ID!
+    $username: String!
+  ) {
+    sendPrivateMessage(
+      userid: $userid
+      message: $message
+      roomId: $roomId
+      username: $username
+      private: $private
+      anotheruserid: $anotheruserid
+    ) {
+      userid
+      username
+      message
+      private
+      createdDate
     }
   }
 `;

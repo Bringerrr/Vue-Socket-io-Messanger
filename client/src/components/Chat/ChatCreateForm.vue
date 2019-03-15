@@ -48,11 +48,13 @@ export default {
   methods: {
     createPublicChatRoom() {
       console.log(this.user);
-      this.$store.dispatch("addPublicChatRoom", {
+      const payload = {
         userid: this.$store.getters.user._id,
         title: this.title,
         description: this.description
-      });
+      };
+
+      this.$store.dispatch("addPublicChatRoom", payload);
       this.dialog = false;
     }
   }

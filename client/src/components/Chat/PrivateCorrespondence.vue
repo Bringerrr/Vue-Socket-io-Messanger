@@ -1,36 +1,6 @@
 <template >
-  <v-layout>
-    <v-flex xs2 sm2 align-self-start>
-      <v-card class="Chat-Sidebar">
-        <v-toolbar color="indigo" dark>
-          <v-icon>people</v-icon>
-
-          <v-toolbar-title>Participants</v-toolbar-title>
-
-          <v-spacer></v-spacer>
-
-          <v-btn icon>
-            <v-icon>add</v-icon>
-          </v-btn>
-        </v-toolbar>
-        <v-list class="Chat-Sidebar-List">
-          <v-list-tile v-for="item in usersOnline" :key="item.username" avatar>
-            <v-list-tile-avatar>
-              <img :src="item.avatar">
-            </v-list-tile-avatar>
-
-            <v-list-tile-content>
-              <v-list-tile-title v-text="item.username"></v-list-tile-title>
-            </v-list-tile-content>
-
-            <v-list-tile-action>
-              <v-icon v-if="item.icon" color="pink">star</v-icon>
-            </v-list-tile-action>
-          </v-list-tile>
-        </v-list>
-      </v-card>
-    </v-flex>
-    <v-flex xs9 sm9 offset-sm0 align-self-center>
+  <v-layout row>
+    <v-flex xs12>
       <v-card>
         <v-toolbar color="teal" dark>
           <v-toolbar-side-icon></v-toolbar-side-icon>
@@ -48,7 +18,7 @@
           <v-subheader>Recent chat</v-subheader>
           <v-list-tile
             v-scroll:#scroll-target="onScroll"
-            v-for="item in currentChatRoomMessages"
+            v-for="item in currentUserCorrespondenceMessages"
             :key="item._id"
             avatar
             @click.prevent
@@ -58,11 +28,8 @@
             </v-list-tile-avatar>
 
             <v-list-tile-content>
-              <v-list-tile-title>
-                <span>{{item.username}}</span>
-                <span class="ChatRoom_Message_Date caption">{{item.createdDate}}</span>
-              </v-list-tile-title>
-              <v-list-tile-sub-title class="ChatRoom_Message_Text" v-html="item.message"></v-list-tile-sub-title>
+              <v-list-tile-title v-html="item.username"></v-list-tile-title>
+              <v-list-tile-sub-title v-html="item.message"></v-list-tile-sub-title>
             </v-list-tile-content>
           </v-list-tile>
         </v-list>
@@ -70,7 +37,7 @@
         <v-divider></v-divider>
 
         <v-container>
-          <v-form lazy-validation ref="form" @submit.prevent="sendMessage">
+          <v-form lazy-validation ref="form" @submit.prevent="sendPrivateMessage">
             <v-layout row>
               <v-flex xs12>
                 <v-text-field
@@ -97,16 +64,9 @@ import { mapGetters } from "vuex";
 import io from "socket.io-client";
 
 export default {
-  name: "ChatRoom",
+  name: "PrivateCorrespondence",
   data() {
     return {
-      usersOnline: [
-        {
-          username: "Test",
-          avatar: "https://cdn.vuetifyjs.com/images/lists/1.jpg",
-          icon: true
-        }
-      ],
       socket: null,
       currentRoomId: this.$route.params.id,
       message: "",
@@ -115,41 +75,39 @@ export default {
   },
   methods: {
     scrollToBot(elem) {
-      console.log("scrolled to Bot", elem);
       elem.scrollTop = elem.scrollHeight - elem.clientHeight;
     },
-    async sendMessage() {
+    async sendPrivateMessage() {
       const payload = {
         roomId: this.currentRoomId,
         userid: this.user._id,
+        anotheruserid: this.currentRoomId,
         username: this.user.username,
         avatar: this.user.avatar,
         message: this.message,
-        private: false
+        private: true
       };
       this.socket.emit("message", payload);
-      await this.$store.dispatch("sendChatMessage", payload);
+      await this.$store.dispatch("sendPrivateChatMessage", payload);
       this.message = "";
     }
   },
-  watch: {
-    $route(to, from) {
-      console.log("route", to, from);
-    }
-  },
   computed: {
-    ...mapGetters(["loading", "user", "currentChatRoomMessages"])
+    ...mapGetters(["loading", "user", "currentUserCorrespondenceMessages"])
   },
   async created() {
     // get messages from current room querry
 
-    await this.$store.dispatch(
-      "getCurrentChatRoomMessages",
-      this.currentRoomId
-    );
+    const payload = {
+      token: localStorage.getItem("token"),
+      anotheruserid: this.currentRoomId
+    };
+
+    await this.$store.dispatch("getCurrentUserCorrespondenceMessages", payload);
     this.scrollToBot(this.$refs.chatcontainer.$el);
   },
   mounted() {
+    console.log(this);
     this.socket = io("localhost:4000");
     this.socket.emit("joinRoom", this.currentRoomId);
     this.socket.on("getMessage", async data => {
@@ -176,20 +134,10 @@ export default {
 </script>
 
 <style>
-.v-list__tile__title,
-.v-list__tile__sub-title {
-  width: auto;
-}
-.ChatRoom_Message_Date {
-  margin-left: 20px;
-  padding: 0 10px;
-  border: 1px solid #000;
-}
-.ChatRoom_Message_Text {
-  border: 1px solid #000;
-  margin-left: 20px;
-  padding: 0 20px;
-  border-radius: 0px 10px 10px 10px;
+/* .v-list__tile__content {
+  flex: none;
+} */
+.Chat-Component {
 }
 .Private-Message {
   border-radius: 0px 0 20px 0;
@@ -200,13 +148,5 @@ export default {
   overflow: hidden;
   overflow-y: scroll;
   height: 60vh;
-}
-.Chat-Sidebar {
-  max-height: 60vh;
-}
-
-.Chat-Sidebar-List {
-  overflow: hidden;
-  overflow-y: scroll;
 }
 </style>

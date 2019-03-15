@@ -27,18 +27,41 @@ const rootResolver = {
     });
     return user;
   },
-  getCurrentUserPrivateMessages: async (args, req) => {
+  getCurrentUserCorrespondence: async (args, req) => {
+    const currentUser = jwt.verify(
+      req.body.variables.token,
+      process.env.SECRET
+    );
+    const { username, _id } = currentUser;
+    // const { username, _id } = req.body.variables;
     const user = await User.findOne({
-      username: req.body.variables.username
+      username: username
     })
       .populate({
         path: "correspondence",
-        model: Correspondence
-        // populate: { path: "participants", model: User }
+        model: Correspondence,
+        populate: { path: "participants", model: User }
+      })
+      .populate({
+        path: "correspondence",
+        model: Correspondence,
+        populate: { path: "messages", model: ChatMessage }
       })
       .lean();
-    console.log("user", user);
-    return user;
+
+    const newCorrespondence = user.correspondence.map(correspondence => {
+      console.log(_id);
+      // correspondence.anotheruser = 2;
+      correspondence.anotheruser = correspondence.participants.filter(
+        participant => {
+          return participant._id.toString() !== _id;
+        }
+      )[0];
+      return correspondence;
+    });
+
+    console.log("correspondence after map", newCorrespondence);
+    return newCorrespondence;
   },
   getPublicChatRooms: async args => {
     const chatRooms = await ChatRoom.find({}).sort({ createdDate: "desc" });
@@ -56,6 +79,32 @@ const rootResolver = {
     });
 
     return currentChatRoom.messages;
+  },
+  getCurrentUserCorrespondenceMessages: async (ars, req) => {
+    const currentUser = jwt.verify(
+      req.body.variables.token,
+      process.env.SECRET
+    );
+    const { _id } = currentUser;
+    const { anotheruserid } = req.body.variables;
+    console.log(_id, anotheruserid);
+    const currentCorrespondence = await Correspondence.findOne({
+      participants: _id,
+      participants: anotheruserid
+    })
+      .populate({ path: "messages", model: ChatMessage })
+      .lean();
+
+    // rewrite Date into local date string
+
+    currentCorrespondence.messages.map(message => {
+      message.createdDate = dateToString(message.createdDate);
+      return message;
+    });
+
+    console.log("getCurrentUserCorrespondenceMessages", currentCorrespondence);
+
+    return currentCorrespondence.messages;
   },
   getPosts: async args => {
     const posts = await Post.find({})
@@ -110,53 +159,56 @@ const rootResolver = {
         deleted: false
       });
 
-      await Correspondence.findOne(
-        {
+      const data = await Correspondence.findOne({
+        participants: [
+          req.body.variables.userid,
+          req.body.variables.anotheruserid
+        ]
+      });
+
+      // if querry don't find correspondence between two users
+      if (data === null) {
+        // create new correspondence
+        const newCorrespondence = await new Correspondence({
           participants: [
             req.body.variables.userid,
             req.body.variables.anotheruserid
-          ]
-        },
-        async (err, data) => {
-          if (err) {
-            console.log("CorrespondenceError", err);
-          }
-          // if querry don't find correspondence between two users
-          if (data === null) {
-            // create new correspondence
-            const newCorrespondence = await new Correspondence({
-              participants: [
-                req.body.variables.userid,
-                req.body.variables.anotheruserid
-              ],
-              messages: [inputMessage._id]
-            });
-            newCorrespondence.save();
+          ],
+          messages: [inputMessage._id]
+        });
+        newCorrespondence.save();
 
-            // find users and push to their correspondences new ones
-            User.find({
-              _id: [req.body.variables.userid, req.body.variables.anotheruserid]
-            }).exec((err, data) => {
-              if (err) {
-                console.log("userFoundError", err);
-              }
-              data.forEach(user => {
-                user.correspondence.push(newCorrespondence._id);
-                user.save();
-                console.log(user);
-              });
-            });
-          }
-          if (data !== null) {
-            data.messages.push(inputMessage._id);
-            data.save(function(err) {
-              if (err) {
-                console.error("ERROR!");
-              }
-            });
-          }
-        }
-      );
+        // find users and push to their correspondences new ones
+        await User.findOneAndUpdate(
+          { _id: req.body.variables.userid },
+          { $push: { correspondence: newCorrespondence._id } },
+          { new: true }
+        )
+          .lean()
+          .exec((err, data) => {
+            if (err) {
+              console.log("Something wrong when updating data!");
+            }
+          });
+
+        await User.findOneAndUpdate(
+          { _id: req.body.variables.anotheruserid },
+          { $push: { correspondence: newCorrespondence._id } },
+          { new: true }
+        )
+          .lean()
+          .exec((err, data) => {
+            if (err) {
+              console.log("Something wrong when updating data!");
+            }
+          });
+      }
+      // if querry find correspondence push new messages
+      if (data !== null) {
+        data.messages.push(inputMessage._id);
+        data.save();
+      }
+
       await inputMessage.save();
       return inputMessage;
     } catch (err) {

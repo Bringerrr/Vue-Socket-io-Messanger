@@ -10,6 +10,7 @@ import Signin from "./components/Auth/Signin.vue";
 import Signup from "./components/Auth/Signup.vue";
 import Chat from "./components/Chat/Chat.vue";
 import ChatRoom from "./components/Chat/ChatRoom.vue";
+import PrivateCorrespondence from "./components/Chat/PrivateCorrespondence.vue";
 
 import AuthGuard from "./AuthGuard";
 
@@ -57,7 +58,12 @@ const router = new Router({
       component: Chat,
       beforeEnter: AuthGuard
     },
-    { path: "/Chat/:id", component: ChatRoom }
+    { path: "/chat/chatroom/:id", component: ChatRoom, beforeEnter: AuthGuard },
+    {
+      path: "/chat/correspondence/:id",
+      component: PrivateCorrespondence,
+      beforeEnter: AuthGuard
+    }
   ]
 });
 
