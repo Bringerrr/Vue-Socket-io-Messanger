@@ -159,6 +159,24 @@ export const INFINITE_SCROLL_POSTS = gql`
   }
 `;
 
+export const INFINITE_SCROLL_MESSAGES = gql`
+  query($pageNum: Int!, $pageSize: Int!, $roomid: ID!) {
+    infiniteScrollMessages(
+      pageNum: $pageNum
+      pageSize: $pageSize
+      roomid: $roomid
+    ) {
+      hasMore
+      messages {
+        username
+        message
+        createdDate
+        avatar
+      }
+    }
+  }
+`;
+
 /* Chat Mutations */
 
 export const ADD_PUBLIC_CHAT_ROOM = gql`

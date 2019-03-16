@@ -6,12 +6,6 @@
           <v-icon>people</v-icon>
 
           <v-toolbar-title>Participants</v-toolbar-title>
-
-          <v-spacer></v-spacer>
-
-          <v-btn icon>
-            <v-icon>add</v-icon>
-          </v-btn>
         </v-toolbar>
         <v-list class="Chat-Sidebar-List">
           <v-list-tile v-for="item in usersOnline" :key="item.username" avatar>
@@ -100,6 +94,10 @@ export default {
   name: "ChatRoom",
   data() {
     return {
+      pageNum: 0,
+      showMoreEnabled: true,
+      pageSize: 10,
+      scrollPosition: 0,
       usersOnline: [
         {
           username: "Test",
@@ -114,6 +112,9 @@ export default {
     };
   },
   methods: {
+    onScroll(e) {
+      this.scrollPosition = e.target.scrollTop;
+    },
     scrollToBot(elem) {
       console.log("scrolled to Bot", elem);
       elem.scrollTop = elem.scrollHeight - elem.clientHeight;
@@ -130,31 +131,50 @@ export default {
       this.socket.emit("message", payload);
       await this.$store.dispatch("sendChatMessage", payload);
       this.message = "";
+    },
+    async showMessages() {
+      this.pageNum = 1;
+      // fetch more data and transform original result
+      let payload = {
+        pageNum: this.pageNum,
+        pageSize: this.pageSize,
+        roomid: this.currentRoomId
+      };
+      this.$store.dispatch("infiniteScrollMessages", payload);
+      return true;
+    },
+    async showMoreMessages() {
+      this.pageNum += 1;
+      // fetch more data and transform original result
+      let payload = {
+        pageNum: this.pageNum,
+        pageSize: this.pageSize,
+        roomid: this.currentRoomId
+      };
+      this.$store.dispatch("infiniteScrollMessages", payload);
     }
   },
   watch: {
-    $route(to, from) {
-      console.log("route", to, from);
+    scrollPosition(newVal, oldVal) {
+      console.log("newValScroll", newVal, "oldValScroll", oldVal);
+      if (oldVal > 0 && newVal === 0) {
+        console.log("Подгружаю старые сообщения");
+        this.showMoreMessages();
+      }
     }
   },
   computed: {
     ...mapGetters(["loading", "user", "currentChatRoomMessages"])
   },
   async created() {
-    // get messages from current room querry
-
-    await this.$store.dispatch(
-      "getCurrentChatRoomMessages",
-      this.currentRoomId
-    );
-    this.scrollToBot(this.$refs.chatcontainer.$el);
+    await this.showMessages();
+    console.log(this.$refs.chatcontainer.$el);
   },
   mounted() {
     this.socket = io("localhost:4000");
     this.socket.emit("joinRoom", this.currentRoomId);
     this.socket.on("getMessage", async data => {
       await this.$store.dispatch("setChatMessage", data);
-      this.scrollToBot(this.$refs.chatcontainer.$el);
     });
     this.socket.on("editMessage", async data => {
       // await this.props.replaceMessage({
@@ -166,11 +186,18 @@ export default {
       // this.props.removeMessage(deleted);
     });
   },
+  updated() {
+    // Scroll chat to bot when component initiated
+    if (this.currentChatRoomMessages.length === this.pageSize) {
+      this.scrollToBot(this.$refs.chatcontainer.$el);
+    }
+  },
   beforeDestroy() {},
   destroyed() {
+    this.pageNum = 0;
+    this.$store.dispatch("clearMessages");
     // const reason = "user exited the room";
     this.socket.emit("disconnectRoom", "user exited the room");
-    console.log("CHAT ROOM DESTROYED");
   }
 };
 </script>

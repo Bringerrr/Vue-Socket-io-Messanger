@@ -65,6 +65,7 @@ export default {
   data() {
     return {
       pageNum: 1,
+      pageSize: 2,
       // showMoreEnabled: true,
       showPostCreator: false
     };
@@ -72,9 +73,11 @@ export default {
   apollo: {
     infiniteScrollPosts: {
       query: INFINITE_SCROLL_POSTS,
-      variables: {
-        pageNum: 1,
-        pageSize
+      variables() {
+        return {
+          pageNum: 1,
+          pageSize
+        };
       }
     }
   },

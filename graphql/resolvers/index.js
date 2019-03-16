@@ -149,8 +149,7 @@ const rootResolver = {
           path: "createdBy",
           model: "User"
         })
-        .limit(pageSize)
-        .lean();
+        .limit(pageSize);
     } else {
       // If page number is greater than one, figure out how many documents to skip
       const skips = pageSize * (pageNum - 1);
@@ -167,6 +166,41 @@ const rootResolver = {
     const totalDocs = await Post.countDocuments();
     const hasMore = totalDocs > pageSize * pageNum;
     return { posts, hasMore };
+  },
+  infiniteScrollMessages: async (args, req) => {
+    const { pageNum, pageSize, roomid } = req.body.variables;
+    let chatRoom;
+    let skip = pageSize * (pageNum - 1);
+    if (pageNum === 1) {
+      chatRoom = await ChatRoom.findOne({ _id: roomid }).populate({
+        path: "messages",
+        model: "ChatMessage",
+        options: {
+          limit: pageSize,
+          sort: { createdDate: -1 }
+        }
+      });
+    } else {
+      // If page number is greater than one, figure out how many documents to skip
+      chatRoom = await ChatRoom.findOne({ _id: roomid })
+        .populate({
+          path: "messages",
+          model: "ChatMessage",
+          options: {
+            limit: pageSize,
+            sort: { createdDate: -1 },
+            skip: skip
+          }
+        })
+        .lean();
+    }
+    const totalDocs = await chatRoom.messages.length;
+
+    console.log("totalDocs", totalDocs);
+    const hasMore = totalDocs > pageSize * pageNum;
+    const { messages } = chatRoom;
+    console.log("messages", messages);
+    return { messages, hasMore };
   },
   sendChatMessage: async (args, req) => {
     try {

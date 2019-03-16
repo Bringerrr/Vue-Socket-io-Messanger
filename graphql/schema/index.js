@@ -68,6 +68,11 @@ module.exports = buildSchema(`
     hasMore: Boolean
   }
 
+  type ChatPage{
+    messages : [ChatMessage]
+    hasMore: Boolean
+  }
+
   type Query {
     getCurrentUser: User
     getCurrentUserCorrespondence: [Correspondence]
@@ -76,6 +81,7 @@ module.exports = buildSchema(`
     infiniteScrollPosts(pageNum: Int!, pageSize: Int!): PostPage
     getPublicChatRooms: [ChatRoom]
     getCurrentChatRoomMessages(roomId:ID!): [ChatMessage]
+    infiniteScrollMessages(pageNum: Int!, pageSize: Int!, roomid: ID!): ChatPage
   }
   
   type Mutation {

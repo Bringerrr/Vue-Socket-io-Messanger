@@ -15,6 +15,7 @@ import {
   ADD_PUBLIC_CHAT_ROOM,
   GET_PUBLIC_CHAT_ROOMS,
   GET_CURRENT_CHAT_ROOM_MESSAGES,
+  INFINITE_SCROLL_MESSAGES,
   SEND_CHAT_MESSAGE
 } from "./queries";
 import { debug } from "util";
@@ -49,7 +50,18 @@ export default new Vuex.Store({
       console.log("setCurrentChatRoomMessages", state.currentChatRoomMessages);
     },
     setChatMessage: (state, payload) => {
-      state.currentChatRoomMessages.push(payload);
+      if (typeof payload === "object" && payload.length > 0) {
+        payload.forEach(message => {
+          state.currentChatRoomMessages.push(message);
+        });
+      } else state.currentChatRoomMessages.push(payload);
+    },
+    setOlderChatMessage: (state, payload) => {
+      if (typeof payload === "object" && payload.length > 0) {
+        payload.forEach(message => {
+          state.currentChatRoomMessages.unshift(message);
+        });
+      } else state.currentChatRoomMessages.push(payload);
     },
     setUser: (state, payload) => {
       state.user = payload;
@@ -79,7 +91,8 @@ export default new Vuex.Store({
     },
     clearUser: state => (state.user = null),
     clearError: state => (state.error = null),
-    clearPublicChatRooms: state => (state.publicChatRooms = null)
+    clearPublicChatRooms: state => (state.publicChatRooms = null),
+    clearMessages: state => (state.currentChatRoomMessages = [])
   },
   actions: {
     addPublicChatRoom: ({ commit }, payload) => {
@@ -154,6 +167,30 @@ export default new Vuex.Store({
           console.error(err);
         });
     },
+    infiniteScrollMessages: ({ commit }, payload) => {
+      commit("setLoading", true);
+      apolloClient
+        .query({
+          query: INFINITE_SCROLL_MESSAGES,
+          variables: payload
+        })
+        .then(({ data }) => {
+          console.log(
+            "data.infiniteScrollMessages.messages",
+            data.infiniteScrollMessages.messages
+          );
+          commit("setLoading", false);
+          if (data.infiniteScrollMessages.messages.length > 0)
+            commit("setOlderChatMessage", data.infiniteScrollMessages.messages);
+        })
+        .catch(err => {
+          commit("setLoading", false);
+          console.error(err);
+        });
+    },
+    clearMessages: ({ commit }) => {
+      commit("clearMessages");
+    },
     getCurrentUserCorrespondenceMessages: ({ commit }, payload) => {
       console.log("getCurrentUserCorrespondenceMessagespayload", payload);
       commit("setLoading", true);
@@ -172,6 +209,7 @@ export default new Vuex.Store({
             "setCurrentUserCorrespondenceMessages",
             data.getCurrentUserCorrespondenceMessages
           );
+          return true;
         })
         .catch(err => {
           commit("setLoading", false);
