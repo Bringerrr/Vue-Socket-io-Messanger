@@ -60,19 +60,21 @@ io.on("connection", function(socket) {
   sockets.push(socket);
   // console.log("sockets online after connection : ", sockets);
   console.log("socket connected : " + socket.id);
-  socket.on("joinRoom", async roomid => {
-    socket.join(roomid, () => {
+  socket.on("joinRoom", async payload => {
+    const { roomId } = payload;
+    socket.join(roomId, () => {
       let rooms = Object.keys(socket.rooms);
-      io.to(roomid).emit(`a new user has joined the room ${roomid}`);
+      io.to(roomId).emit(`a new user has joined the room ${roomId}`);
     });
-    console.log(`socket ${socket.id} joined room ${roomid}`);
+    console.log(`socket ${socket.id} joined room ${roomId}`);
   });
   socket.on("leaveRoom", async roomid => {
-    socket.leave(roomid, () => {
+    const { roomId } = payload;
+    socket.leave(roomId, () => {
       let rooms = Object.keys(socket.rooms);
-      io.to(roomid).emit(`a user has left the room ${roomid}`);
+      io.to(roomId).emit(`a user has left the room ${roomId}`);
     });
-    console.log(`socket ${socket.id} left room ${roomid}`);
+    console.log(`socket ${socket.id} left room ${roomId}`);
   });
   socket.on("message", async data => {
     io.to(data.roomId).emit("getMessage", data);

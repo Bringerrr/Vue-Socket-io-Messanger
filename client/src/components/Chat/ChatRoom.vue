@@ -1,7 +1,7 @@
 <template >
   <v-layout>
     <v-flex xs2 sm2 align-self-start>
-      <v-card class="Chat-Sidebar">
+      <v-card v-if="access === 'private' " class="Chat-Sidebar">
         <v-toolbar color="indigo" dark>
           <v-icon>people</v-icon>
 
@@ -27,15 +27,9 @@
     <v-flex xs9 sm9 offset-sm0 align-self-center>
       <v-card>
         <v-toolbar color="teal" dark>
-          <v-toolbar-side-icon></v-toolbar-side-icon>
-
-          <v-toolbar-title class="text-xs-center">{{ $route.params.id }}</v-toolbar-title>
+          <v-toolbar-title class="text-xs-center">Room {{ $route.params.id }}</v-toolbar-title>
 
           <v-spacer></v-spacer>
-
-          <v-btn icon>
-            <v-icon>search</v-icon>
-          </v-btn>
         </v-toolbar>
 
         <v-list ref="chatcontainer" class="Chat-Container" id="scroll-target" subheader>
@@ -98,6 +92,8 @@ export default {
       showMoreEnabled: true,
       pageSize: 10,
       scrollPosition: 0,
+      scrollHeight: 0,
+      oldScrollHeight: 0,
       usersOnline: [
         {
           username: "Test",
@@ -107,6 +103,7 @@ export default {
       ],
       socket: null,
       currentRoomId: this.$route.params.id,
+      access: this.$route.params.access,
       message: "",
       messageRules: [message => !!message || "write something"]
     };
@@ -114,6 +111,7 @@ export default {
   methods: {
     onScroll(e) {
       this.scrollPosition = e.target.scrollTop;
+      // console.log(e.target);
     },
     scrollToBot(elem) {
       console.log("scrolled to Bot", elem);
@@ -155,12 +153,32 @@ export default {
     }
   },
   watch: {
-    scrollPosition(newVal, oldVal) {
-      console.log("newValScroll", newVal, "oldValScroll", oldVal);
+    async scrollPosition(newVal, oldVal) {
+      // console.log("newValScroll", newVal, "oldValScroll", oldVal);
       if (oldVal > 0 && newVal === 0) {
-        console.log("Подгружаю старые сообщения");
-        this.showMoreMessages();
+        console.log("fetching latest messages");
+        await this.showMoreMessages();
       }
+    },
+    scrollHeight(newVal, oldVal) {
+      if (newVal > oldVal && oldVal > 0 && newVal > 0) {
+        this.oldScrollHeight = this.$refs.chatcontainer.$el.scrollTop =
+          newVal - oldVal;
+        console.log("scrollHeight Worked");
+      }
+    },
+    currentChatRoomMessages(newVal, oldVal) {
+      console.log(
+        "newValcurrentChatRoomMessages",
+        newVal,
+        "oldValcurrentChatRoomMessages",
+        oldVal
+      );
+      let newScrollHeight = this.$refs.chatcontainer.$el.scrollHeight;
+      this.$refs.chatcontainer.$el.scrollTop =
+        newScrollHeight - this.oldScrollHeight;
+      console.log(newScrollHeight - this.oldScrollHeight);
+      this.oldScrollHeight = newScrollHeight;
     }
   },
   computed: {
@@ -172,7 +190,10 @@ export default {
   },
   mounted() {
     this.socket = io("localhost:4000");
-    this.socket.emit("joinRoom", this.currentRoomId);
+    this.socket.emit("joinRoom", {
+      roomId: this.currentRoomId,
+      username: this.user
+    });
     this.socket.on("getMessage", async data => {
       await this.$store.dispatch("setChatMessage", data);
     });

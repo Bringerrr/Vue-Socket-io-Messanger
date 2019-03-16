@@ -64,8 +64,20 @@ const rootResolver = {
     return newCorrespondence;
   },
   getPublicChatRooms: async args => {
+    const chatRooms = await ChatRoom.find({})
+      .sort({ createdDate: "desc" })
+      .lean();
+    const filteredChatRooms = await chatRooms.filter(
+      room => room.private === false
+    );
+    return filteredChatRooms;
+  },
+  getPrivateChatRooms: async args => {
     const chatRooms = await ChatRoom.find({}).sort({ createdDate: "desc" });
-    return chatRooms;
+    const filteredChatRooms = await chatRooms.filter(
+      room => room.private === true
+    );
+    return filteredChatRooms;
   },
   getCurrentChatRoomMessages: async (ars, req) => {
     const { roomId } = req.body.variables;
@@ -302,27 +314,27 @@ const rootResolver = {
       console.log("PrivateMessageSent", err);
     }
   },
-  addPublicChatRoom: async (args, req) => {
-    console.log("addPublicChatRoom", req.body.variables);
+  addChatRoom: async (args, req) => {
+    console.log("addChatRoom", req.body.variables);
 
     try {
-      const newPublicChatRoom = await new ChatRoom({
+      const newChatRoom = await new ChatRoom({
         participants: [req.body.variables.userid],
-        private: true,
+        private: req.body.variables.private,
         title: req.body.variables.title,
         description: req.body.variables.description,
         createdBy: req.body.variables.userid
       }).save();
-      const newPublicChatRoomId = newPublicChatRoom._id;
+      const newChatRoomId = newChatRoom._id;
       const user = await User.findById(req.body.variables.userid);
       if (!user) {
         throw new Error("User not found");
       }
-      user.chatRooms.push(newPublicChatRoomId);
+      user.chatRooms.push(newChatRoomId);
       user.save();
-      return newPublicChatRoom;
+      return newChatRoom;
     } catch (err) {
-      console.log("addPublicChatRoom", err);
+      console.log("addChatRoom", err);
     }
   },
   signinUser: async (args, req) => {

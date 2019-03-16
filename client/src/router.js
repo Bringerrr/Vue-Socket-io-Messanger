@@ -67,7 +67,12 @@ const router = new Router({
       component: Chat,
       beforeEnter: AuthGuard
     },
-    { path: "/chat/chatroom/:id", component: ChatRoom, beforeEnter: AuthGuard },
+    {
+      path: "/chat/chatroom/:access/:id",
+      component: ChatRoom,
+      beforeEnter: AuthGuard,
+      props: { default: true, sidebar: false }
+    },
     {
       path: "/chat/correspondence/:id",
       component: PrivateCorrespondence,

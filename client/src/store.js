@@ -12,13 +12,13 @@ import {
   ADD_POST,
   SIGNIN_USER,
   SIGNUP_USER,
-  ADD_PUBLIC_CHAT_ROOM,
+  ADD_CHAT_ROOM,
   GET_PUBLIC_CHAT_ROOMS,
+  GET_PRIVATE_CHAT_ROOMS,
   GET_CURRENT_CHAT_ROOM_MESSAGES,
   INFINITE_SCROLL_MESSAGES,
   SEND_CHAT_MESSAGE
 } from "./queries";
-import { debug } from "util";
 
 Vue.use(Vuex);
 
@@ -26,6 +26,7 @@ export default new Vuex.Store({
   state: {
     posts: [],
     publicChatRooms: [],
+    privateChatRooms: [],
     currentChatRoomMessages: [],
     chat: [],
     user: null,
@@ -44,6 +45,9 @@ export default new Vuex.Store({
     },
     setPublicChatRooms: (state, payload) => {
       state.publicChatRooms = payload;
+    },
+    setPrivateChatRooms: (state, payload) => {
+      state.privateChatRooms = payload;
     },
     setCurrentChatRoomMessages: (state, payload) => {
       state.currentChatRoomMessages = payload;
@@ -95,17 +99,33 @@ export default new Vuex.Store({
     clearMessages: state => (state.currentChatRoomMessages = [])
   },
   actions: {
-    addPublicChatRoom: ({ commit }, payload) => {
+    addChatRoom: ({ commit }, payload) => {
       commit("setLoading", true);
       apolloClient
         .mutate({
-          mutation: ADD_PUBLIC_CHAT_ROOM,
+          mutation: ADD_CHAT_ROOM,
           variables: payload
         })
         .then(({ data }) => {
-          commit("setPublicChatRoom", data.addPublicChatRoom);
           commit("setLoading", false);
-          router.push(`/chat/chatroom/${data.addPublicChatRoom._id}`);
+          router.push(`/chat/chatroom/public/${data.addChatRoom._id}`);
+        })
+        .catch(err => {
+          commit("setLoading", false);
+          console.error("ADD_PUBLIC_CHAT_ROOM", err);
+        });
+    },
+    addPrivateChatRoom: ({ commit }, payload) => {
+      commit("setLoading", true);
+      apolloClient
+        .mutate({
+          mutation: ADD_PRIVATE_CHAT_ROOM,
+          variables: payload
+        })
+        .then(({ data }) => {
+          commit("setPrivateChatRoom", data.addPrivateChatRoom);
+          commit("setLoading", false);
+          router.push(`/chat/chatroom/private/${data.addPrivateChatRoom._id}`);
         })
         .catch(err => {
           commit("setLoading", false);
@@ -121,6 +141,21 @@ export default new Vuex.Store({
         .then(({ data }) => {
           commit("setLoading", false);
           commit("setPublicChatRooms", data.getPublicChatRooms);
+        })
+        .catch(err => {
+          commit("setLoading", false);
+          console.error(err);
+        });
+    },
+    getPrivateChatRooms: ({ commit }) => {
+      commit("setLoading", true);
+      apolloClient
+        .query({
+          query: GET_PRIVATE_CHAT_ROOMS
+        })
+        .then(({ data }) => {
+          commit("setLoading", false);
+          commit("setPrivateChatRooms", data.getPrivateChatRooms);
         })
         .catch(err => {
           commit("setLoading", false);
@@ -177,7 +212,7 @@ export default new Vuex.Store({
         .then(({ data }) => {
           console.log(
             "data.infiniteScrollMessages.messages",
-            data.infiniteScrollMessages.messages
+            data.infiniteScrollMessages
           );
           commit("setLoading", false);
           if (data.infiniteScrollMessages.messages.length > 0)
@@ -192,7 +227,7 @@ export default new Vuex.Store({
       commit("clearMessages");
     },
     getCurrentUserCorrespondenceMessages: ({ commit }, payload) => {
-      console.log("getCurrentUserCorrespondenceMessagespayload", payload);
+      console.log("getCurrentUserCorrespondenceMessagesPayload", payload);
       commit("setLoading", true);
       apolloClient
         .query({
@@ -344,6 +379,7 @@ export default new Vuex.Store({
     loading: state => state.loading,
     error: state => state.error,
     authError: state => state.authError,
-    publicChatRooms: state => state.publicChatRooms
+    publicChatRooms: state => state.publicChatRooms,
+    privateChatRooms: state => state.privateChatRooms
   }
 });

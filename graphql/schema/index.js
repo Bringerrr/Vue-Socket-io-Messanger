@@ -80,6 +80,7 @@ module.exports = buildSchema(`
     getPosts: [Post]
     infiniteScrollPosts(pageNum: Int!, pageSize: Int!): PostPage
     getPublicChatRooms: [ChatRoom]
+    getPrivateChatRooms: [ChatRoom]
     getCurrentChatRoomMessages(roomId:ID!): [ChatMessage]
     infiniteScrollMessages(pageNum: Int!, pageSize: Int!, roomid: ID!): ChatPage
   }
@@ -94,7 +95,7 @@ module.exports = buildSchema(`
     ): Post!
     sendChatMessage(userid: ID!, anotheruserid: ID, roomId:ID!, username: String!, avatar: String, message: String!, private: Boolean!): ChatMessage
     sendPrivateMessage(userid: ID!, anotheruserid: ID, roomId:ID!, username: String!, avatar: String, message: String!, private: Boolean!): ChatMessage
-    addPublicChatRoom(
+    addChatRoom(
       private: Boolean!
       creatorId: ID!
       description: String!

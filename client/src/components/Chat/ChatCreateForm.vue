@@ -17,6 +17,8 @@
               <v-flex xs12 sm12 md12>
                 <v-text-field v-model="description" label="Description" required></v-text-field>
               </v-flex>
+              <v-checkbox v-model="checkbox" label="Private" value="true"></v-checkbox>
+              <v-checkbox v-model="checkbox" label="Public" value="false"></v-checkbox>
             </v-layout>
           </v-container>
           <small>*indicates required field</small>
@@ -36,11 +38,15 @@ import { mapState } from "vuex";
 
 export default {
   data: () => ({
+    checkbox: "true",
     dialog: false,
     title: "",
     description: ""
   }),
   computed: {
+    isPrivate: function() {
+      return this.checkbox === String(true);
+    },
     ...mapState({
       user: state => state.user
     })
@@ -51,10 +57,12 @@ export default {
       const payload = {
         userid: this.$store.getters.user._id,
         title: this.title,
-        description: this.description
+        description: this.description,
+        private: this.isPrivate
       };
 
-      this.$store.dispatch("addPublicChatRoom", payload);
+      this.$store.dispatch("addChatRoom", payload);
+      // this.$store.dispatch("addPrivateChatRoom", payload);
       this.dialog = false;
     }
   }

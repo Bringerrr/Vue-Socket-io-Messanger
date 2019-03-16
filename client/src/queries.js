@@ -63,6 +63,20 @@ export const GET_PUBLIC_CHAT_ROOMS = gql`
   }
 `;
 
+export const GET_PRIVATE_CHAT_ROOMS = gql`
+  query {
+    getPrivateChatRooms {
+      _id
+      title
+      description
+      createdBy
+      private
+      participants
+      messages
+    }
+  }
+`;
+
 export const GET_CURRENT_CHAT_ROOM_MESSAGES = gql`
   query($roomId: ID!) {
     getCurrentChatRoomMessages(roomId: $roomId) {
@@ -179,13 +193,18 @@ export const INFINITE_SCROLL_MESSAGES = gql`
 
 /* Chat Mutations */
 
-export const ADD_PUBLIC_CHAT_ROOM = gql`
-  mutation($userid: ID!, $title: String!, $description: String!) {
-    addPublicChatRoom(
+export const ADD_CHAT_ROOM = gql`
+  mutation(
+    $userid: ID!
+    $title: String!
+    $description: String!
+    $private: Boolean!
+  ) {
+    addChatRoom(
       creatorId: $userid
       title: $title
       description: $description
-      private: true
+      private: $private
     ) {
       title
       description
