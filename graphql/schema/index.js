@@ -63,11 +63,17 @@ module.exports = buildSchema(`
     messages: [ID]
   }
 
+  type PostPage{
+    posts: [Post]
+    hasMore: Boolean
+  }
+
   type Query {
     getCurrentUser: User
     getCurrentUserCorrespondence: [Correspondence]
     getCurrentUserCorrespondenceMessages: [ChatMessage]
     getPosts: [Post]
+    infiniteScrollPosts(pageNum: Int!, pageSize: Int!): PostPage
     getPublicChatRooms: [ChatRoom]
     getCurrentChatRoomMessages(roomId:ID!): [ChatMessage]
   }

@@ -115,6 +115,59 @@ const rootResolver = {
       });
     return posts;
   },
+  addPost: async (args, req) => {
+    const {
+      title,
+      imageUrl,
+      categories,
+      description,
+      creatorId
+    } = req.body.variables;
+
+    // const currentUser = jwt.verify(
+    //   req.body.variables.token,
+    //   process.env.SECRET
+    // );
+    // const { _id } = currentUser;
+
+    const newPost = await new Post({
+      title,
+      imageUrl,
+      categories,
+      description,
+      createdBy: creatorId
+    }).save();
+    return newPost;
+  },
+  infiniteScrollPosts: async (args, req) => {
+    const { pageNum, pageSize } = req.body.variables;
+    let posts;
+    if (pageNum === 1) {
+      posts = await Post.find({})
+        .sort({ createdDate: "desc" })
+        .populate({
+          path: "createdBy",
+          model: "User"
+        })
+        .limit(pageSize)
+        .lean();
+    } else {
+      // If page number is greater than one, figure out how many documents to skip
+      const skips = pageSize * (pageNum - 1);
+      posts = await Post.find({})
+        .sort({ createdDate: "desc" })
+        .populate({
+          path: "createdBy",
+          model: "User"
+        })
+        .skip(skips)
+        .limit(pageSize);
+    }
+    console.log("posts", posts);
+    const totalDocs = await Post.countDocuments();
+    const hasMore = totalDocs > pageSize * pageNum;
+    return { posts, hasMore };
+  },
   sendChatMessage: async (args, req) => {
     try {
       const inputMessage = await new ChatMessage({
@@ -214,16 +267,6 @@ const rootResolver = {
     } catch (err) {
       console.log("PrivateMessageSent", err);
     }
-  },
-  addPost: async (args, req) => {
-    const newPost = await new Post({
-      title: req.body.title,
-      imageUrl: req.body.imageUrl,
-      categories: req.body.categories,
-      description: req.body.description,
-      createdBy: req.body.creatorId
-    }).save();
-    return newPost;
   },
   addPublicChatRoom: async (args, req) => {
     console.log("addPublicChatRoom", req.body.variables);

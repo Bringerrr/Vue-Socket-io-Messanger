@@ -1,9 +1,9 @@
 <template>
   <v-card flat>
     <v-bottom-nav :active.sync="bottomNav" :value="true" color="primary" dark>
-      <v-btn dark flat value="invites">
-        <span>Invites</span>
-        <v-icon>notification_important</v-icon>
+      <v-btn dark flat value="chatrooms">
+        <span>Chat Rooms</span>
+        <v-icon>meeting_room</v-icon>
       </v-btn>
 
       <v-btn dark flat value="privatemessages">
@@ -11,9 +11,9 @@
         <v-icon>email</v-icon>
       </v-btn>
 
-      <v-btn dark flat value="chatrooms">
-        <span>Chat Rooms</span>
-        <v-icon>meeting_room</v-icon>
+      <v-btn dark flat value="invites">
+        <span>Invites</span>
+        <v-icon>notification_important</v-icon>
       </v-btn>
     </v-bottom-nav>
     <div class="headline text-xs-center pa-5">
@@ -30,7 +30,7 @@ import PrivateMessages from "./PrivateMessages";
 import Invites from "./Invites";
 
 export default {
-  name: "Profile",
+  name: "Chats",
   components: {
     ChatRooms,
     PrivateMessages,
@@ -38,7 +38,7 @@ export default {
   },
   data() {
     return {
-      bottomNav: "recent"
+      bottomNav: "chatrooms"
     };
   }
 };

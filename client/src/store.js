@@ -9,6 +9,7 @@ import {
   GET_CURRENT_USER_CORRESPONDENCE,
   GET_CURRENT_USER_CORRESPONDENCE_MESSAGES,
   GET_POSTS,
+  ADD_POST,
   SIGNIN_USER,
   SIGNUP_USER,
   ADD_PUBLIC_CHAT_ROOM,
@@ -227,6 +228,19 @@ export default new Vuex.Store({
         })
         .catch(err => {
           commit("setLoading", false);
+          console.error(err);
+        });
+    },
+    addPost: ({ commit }, payload) => {
+      apolloClient
+        .mutate({
+          mutation: ADD_POST,
+          variables: payload
+        })
+        .then(({ data }) => {
+          console.log(data.addPost);
+        })
+        .catch(err => {
           console.error(err);
         });
     },
