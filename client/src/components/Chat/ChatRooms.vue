@@ -57,7 +57,6 @@ export default {
   },
   methods: {
     routeTo(id, access) {
-      console.log(id);
       this.$router.push(`/chat/chatroom/${access}/${id}`);
     }
   },

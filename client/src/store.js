@@ -53,7 +53,6 @@ export default new Vuex.Store({
     },
     setCurrentChatRoomMessages: (state, payload) => {
       state.currentChatRoomMessages = payload;
-      console.log("setCurrentChatRoomMessages", state.currentChatRoomMessages);
     },
     setChatMessage: (state, payload) => {
       if (typeof payload === "object" && payload.length > 0) {
@@ -85,17 +84,12 @@ export default new Vuex.Store({
     },
     setAnotherUser: (state, payload) => {
       state.anotheruser = payload;
-      console.log("setAnotherUser", state.anotheruser);
     },
     setCurrentUserCorrespondence: (state, payload) => {
       state.currentUserCorrespondence = payload;
     },
     setCurrentUserCorrespondenceMessages: (state, payload) => {
       state.currentUserCorrespondenceMessages = payload;
-      console.log(
-        "setCurrentUserCorrespondenceMessages",
-        state.currentUserCorrespondenceMessages
-      );
     },
     setLoading: (state, payload) => {
       state.loading = payload;
@@ -124,7 +118,6 @@ export default new Vuex.Store({
         })
         .then(({ data }) => {
           commit("setLoading", false);
-          console.log("added chat room", data.addChatRoom);
           router.push(`/chat/chatroom/public/${data.addChatRoom._id}`);
         })
         .catch(err => {
@@ -188,7 +181,6 @@ export default new Vuex.Store({
         })
         .then(({ data }) => {
           commit("setLoading", false);
-          console.log("sendChatMessage", data.sendChatMessage);
           commit("setChatMessage", data.sendChatMessage);
         })
         .catch(err => {
@@ -227,10 +219,6 @@ export default new Vuex.Store({
           variables: payload
         })
         .then(({ data }) => {
-          console.log(
-            "data.infiniteScrollMessages.messages",
-            data.infiniteScrollMessages
-          );
           commit("setLoading", false);
           if (data.infiniteScrollMessages.messages.length > 0)
             commit("setOlderChatMessage", data.infiniteScrollMessages.messages);
@@ -244,7 +232,6 @@ export default new Vuex.Store({
       commit("clearMessages");
     },
     getCurrentUserCorrespondenceMessages: ({ commit }, payload) => {
-      console.log("getCurrentUserCorrespondenceMessagesPayload", payload);
       commit("setLoading", true);
       apolloClient
         .query({
@@ -252,10 +239,6 @@ export default new Vuex.Store({
           variables: payload
         })
         .then(({ data }) => {
-          console.log(
-            "getCurrentUserCorrespondenceMessages",
-            data.getCurrentUserCorrespondenceMessages
-          );
           commit("setLoading", false);
           commit(
             "setCurrentUserCorrespondenceMessages",
@@ -335,9 +318,7 @@ export default new Vuex.Store({
           mutation: ADD_POST,
           variables: payload
         })
-        .then(({ data }) => {
-          console.log(data.addPost);
-        })
+        .then(({ data }) => {})
         .catch(err => {
           console.error(err);
         });

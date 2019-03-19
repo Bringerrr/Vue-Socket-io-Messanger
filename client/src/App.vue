@@ -53,7 +53,7 @@
       <v-text-field
         flex
         prepend-icon="search"
-        placeholder="Search posts"
+        placeholder="Under construction *"
         color="accent"
         single-line
         hide-details

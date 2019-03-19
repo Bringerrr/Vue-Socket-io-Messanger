@@ -1,7 +1,7 @@
 <template>
   <v-card>
     <v-list subheader>
-      <v-subheader>Private messages</v-subheader>
+      <v-subheader>Private messages - Under construction *</v-subheader>
       <v-list-tile
         v-for="item in currentUserCorrespondence"
         :key="item._id"

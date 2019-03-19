@@ -18,7 +18,6 @@ const rootResolver = {
   getCurrentUser: async (args, req) => {
     try {
       verifiedToken = jwt.verify(req.body.variables.token, process.env.SECRET);
-      console.log("verifiedToken", verifiedToken);
       let jwtExpirationTimeMilliseconds =
         verifiedToken.exp * 1000 - new Date().getTime();
       const { username } = verifiedToken;
