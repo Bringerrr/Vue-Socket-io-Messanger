@@ -20,7 +20,6 @@ Vue.use(Router);
 
 const router = new Router({
   mode: "history",
-  // base: process.env.BASE_URL,
   routes: [
     {
       path: "/",
@@ -62,7 +61,7 @@ const router = new Router({
       component: Signup
     },
     {
-      path: "/Chat",
+      path: "/chat",
       name: "Chat",
       component: Chat,
       beforeEnter: AuthGuard

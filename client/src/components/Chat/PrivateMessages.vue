@@ -38,14 +38,9 @@ export default {
   },
   methods: {
     routeTo(id) {
-      console.log(id);
-      // this.$router.push("/chat/correspondence/" + id);
       this.$router.push({
-        path: `/chat/correspondence/${id}`,
-        params: { id },
-        props: { default: true, sidebar: false }
+        path: `/chat/chatroom/correspondence/${id}`
       });
-      // props: { default: true, sidebar: false }
     }
   },
   computed: {

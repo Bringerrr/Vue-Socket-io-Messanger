@@ -70,7 +70,10 @@ export default {
       socket: null,
       currentRoomId: this.$route.params.id,
       message: "",
-      messageRules: [message => !!message || "write something"]
+      messageRules: [
+        message => !!message || "write something",
+        message.length < 10 || "Message must be less than 10 characters"
+      ]
     };
   },
   methods: {
@@ -81,7 +84,7 @@ export default {
       const payload = {
         roomId: this.currentRoomId,
         userid: this.user._id,
-        anotheruserid: this.currentRoomId,
+        anotheruserid: "5c87b25987ef1e21401f6caa",
         username: this.user.username,
         avatar: this.user.avatar,
         message: this.message,
@@ -100,33 +103,24 @@ export default {
 
     const payload = {
       token: localStorage.getItem("token"),
-      anotheruserid: this.currentRoomId
+      anotheruserid: "5c87b25987ef1e21401f6caa"
     };
 
     await this.$store.dispatch("getCurrentUserCorrespondenceMessages", payload);
     this.scrollToBot(this.$refs.chatcontainer.$el);
   },
   mounted() {
-    console.log(this);
     this.socket = io("localhost:4000");
-    this.socket.emit("joinRoom", this.currentRoomId);
+    this.socket.emit("joinRoom", {
+      roomId: this.currentRoomId,
+      username: this.user.username
+    });
     this.socket.on("getMessage", async data => {
       await this.$store.dispatch("setChatMessage", data);
-      this.scrollToBot(this.$refs.chatcontainer.$el);
-    });
-    this.socket.on("editMessage", async data => {
-      // await this.props.replaceMessage({
-      //   index: data.index,
-      //   newMessage: data.text
-      // });
-    });
-    this.socket.on("resetMessage", deleted => {
-      // this.props.removeMessage(deleted);
+      this.scrollToBot(this.$refs.chatcontainer);
     });
   },
-  beforeDestroy() {},
   destroyed() {
-    // const reason = "user exited the room";
     this.socket.emit("disconnectRoom", "user exited the room");
     console.log("CHAT ROOM DESTROYED");
   }
@@ -134,11 +128,6 @@ export default {
 </script>
 
 <style>
-/* .v-list__tile__content {
-  flex: none;
-} */
-.Chat-Component {
-}
 .Private-Message {
   border-radius: 0px 0 20px 0;
   padding-left: 20px;

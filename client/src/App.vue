@@ -5,7 +5,7 @@
       <v-toolbar color="accent" dark flat>
         <v-toolbar-side-icon @click="toggleSideNav"></v-toolbar-side-icon>
         <router-link to="/" tag="span" style="cursor: pointer">
-          <h1 class="title pl-3">VueShare</h1>
+          <h1 class="title pl-3">PicShare</h1>
         </router-link>
       </v-toolbar>
 
@@ -44,7 +44,7 @@
       <!-- App Title -->
       <v-toolbar-side-icon @click="toggleSideNav"></v-toolbar-side-icon>
       <v-toolbar-title class="hidden-xs-only">
-        <router-link to="/" tag="span" style="cursor: pointer">VueShare</router-link>
+        <router-link to="/" tag="span" style="cursor: pointer">PicShare</router-link>
       </v-toolbar-title>
 
       <v-spacer></v-spacer>
@@ -62,6 +62,20 @@
       <v-spacer></v-spacer>
 
       <!-- Horizontal Navbar Links -->
+      <v-flex v-if="tokenExpirationTimeMilliseconds<5 * 1000* 60">
+        <div class="text-xs-center">
+          <v-badge color="purple" left overlap>
+            <div class="App_Session-Timer">
+              <span class="Session-Timer_Title">Session time</span>
+              <template v-slot:badge>
+                <v-icon dark small>timer</v-icon>
+              </template>
+
+              <span>{{millisecondsIntoTimer.minutes}}:{{millisecondsIntoTimer.seconds}}</span>
+            </div>
+          </v-badge>
+        </div>
+      </v-flex>
       <v-toolbar-items class="hidden-xs-only">
         <v-btn flat v-for="item in horizontalNavItems" :key="item.title" :to="item.link">
           <v-icon class="hidden-sm-only" left>{{item.icon}}</v-icon>
@@ -98,6 +112,13 @@
           <v-btn dark flat @click="authSnackbar = false">Close</v-btn>
         </v-snackbar>
 
+        <!-- Session was expired Snackbar -->
+        <v-snackbar v-model="sessionWasExpired" color="info" :timeout="5000" bottom left>
+          <v-icon class="mr-3">cancel</v-icon>
+          <h3>Your session was expired</h3>
+          <v-btn dark flat to="/signin">Sign in</v-btn>
+        </v-snackbar>
+
         <!-- Auth Error Snackbar -->
         <v-snackbar
           v-if="authError"
@@ -118,6 +139,8 @@
 
 <script>
 import { mapGetters } from "vuex";
+import store from "./store";
+import router from "./router";
 
 export default {
   name: "App",
@@ -125,7 +148,11 @@ export default {
     return {
       sideNav: false,
       authSnackbar: false,
-      authErrorSnackbar: false
+      authErrorSnackbar: false,
+      sessionWasExpired: false,
+      timeLeftBeforeSessionExpire: null,
+      interval: null,
+      timer: null
     };
   },
   watch: {
@@ -140,12 +167,21 @@ export default {
       if (value !== null) {
         this.authErrorSnackbar = true;
       }
+    },
+    sessionExpired(newValue, oldValue) {
+      if (oldValue === null || newValue === true) {
+        this.sessionWasExpired = true;
+      }
     }
   },
   computed: {
-    ...mapGetters(["authError", "user"]),
+    ...mapGetters([
+      "tokenExpirationTimeMilliseconds",
+      "sessionExpired",
+      "authError",
+      "user"
+    ]),
     horizontalNavItems() {
-      // console.log(this.user);
       let items = [
         { icon: "chat", title: "Posts", link: "/posts" },
         { icon: "lock_open", title: "Sign In", link: "/signin" },
@@ -174,6 +210,20 @@ export default {
         ];
       }
       return items;
+    },
+    millisecondsIntoTimer() {
+      let timer = { hours: 0, minutes: 0, seconds: 0 };
+      timer.seconds = Math.floor(this.timeLeftBeforeSessionExpire / 1000) % 60;
+      timer.minutes =
+        Math.floor(this.timeLeftBeforeSessionExpire / (1000 * 60)) % 60;
+      timer.hours =
+        Math.floor(this.timeLeftBeforeSessionExpire / (1000 * 60 * 60)) % 24;
+      if (timer.seconds < 10) {
+        timer.seconds =
+          "0" + (Math.floor(this.timeLeftBeforeSessionExpire / 1000) % 60);
+      }
+
+      return timer;
     }
   },
   methods: {
@@ -182,12 +232,36 @@ export default {
     },
     toggleSideNav() {
       this.sideNav = !this.sideNav;
+    },
+    culcTimeBeforeSessionExpiration() {
+      this.interval = setInterval(() => {
+        this.timeLeftBeforeSessionExpire -= 1000;
+        if (this.timeLeftBeforeSessionExpire <= 0) {
+          clearInterval(this.interval);
+          store.commit("setSessionExpired", true);
+          router.go();
+        }
+      }, 1000);
+    }
+  },
+  watch: {
+    tokenExpirationTimeMilliseconds(newValue, oldValue) {
+      if (oldValue === null && newValue !== null) {
+        this.timeLeftBeforeSessionExpire = newValue;
+        this.culcTimeBeforeSessionExpiration();
+      }
     }
   }
 };
 </script>
 
 <style>
+.App_Session-Timer {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
 .fade-enter-active,
 .fade-leave-active {
   transition-property: opacity;

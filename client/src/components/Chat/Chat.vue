@@ -1,5 +1,5 @@
 <template>
-  <v-card flat>
+  <v-flex>
     <v-bottom-nav :active.sync="bottomNav" :value="true" color="primary" dark>
       <v-btn dark flat value="chatrooms">
         <span>Chat Rooms</span>
@@ -21,7 +21,7 @@
       <PrivateMessages v-if="bottomNav==='privatemessages'"/>
       <Invites v-if="bottomNav==='invites'"/>
     </div>
-  </v-card>
+  </v-flex>
 </template>
 
 <script>
@@ -30,7 +30,7 @@ import PrivateMessages from "./PrivateMessages";
 import Invites from "./Invites";
 
 export default {
-  name: "Chats",
+  name: "Chat",
   components: {
     ChatRooms,
     PrivateMessages,
@@ -44,3 +44,8 @@ export default {
 };
 </script>
 
+<style>
+.Chat-Container {
+  padding: 40px;
+}
+</style>

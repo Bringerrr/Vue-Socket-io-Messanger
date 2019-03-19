@@ -10,18 +10,14 @@ import VueApollo from "vue-apollo";
 
 import FormAlert from "./components/Shared/FormAlert";
 
-
-// Register Global Component
 Vue.component("form-alert", FormAlert);
 
 Vue.use(VueApollo);
 
 // Setup ApolloClient
 export const defaultClient = new ApolloClient({
-  // link,
-  // cache: new InMemoryCache(),
   uri: "http://localhost:4000/graphql",
-  // include auth token with requests made to backend
+  // include auth token with requests
   fetchOptions: {
     credentials: "include"
   },
@@ -47,10 +43,11 @@ export const defaultClient = new ApolloClient({
       for (let err of graphQLErrors) {
         console.dir(err);
         if (err.name === "AuthenticationError") {
-          // set auth error in state (to show in snackbar)
           store.commit("setAuthError", err);
-          // signout user (to clear token)
           store.dispatch("signoutUser");
+        }
+        if (JSON.stringify(err.message.indexOf("jwt expired")) !== -1) {
+          router.push("/signin");
         }
       }
     }

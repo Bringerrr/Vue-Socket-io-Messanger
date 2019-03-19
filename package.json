@@ -1,7 +1,6 @@
 {
-  "name": "fullstack-vue-graphql-starter",
+  "name": "PicSHare",
   "version": "1.0.0",
-  "description": "Starter for Full-Stack Vue-GraphQL-Apollo Projects",
   "main": "server.js",
   "scripts": {
     "server": "nodemon server.js",
@@ -9,7 +8,6 @@
     "dev": "concurrently --names \"server,client\" \"npm run server --silent\" \"npm run client --silent\""
   },
   "keywords": [],
-  "author": "Reed Barger",
   "license": "ISC",
   "dependencies": {
     "apollo-link-error": "^1.1.7",

@@ -75,7 +75,7 @@ export default {
       ],
       passwordRules: [
         password => !!password || "Password is required",
-        // Make sure password is at least 7 characters
+        // Make sure password is at least 4 characters
         password =>
           password.length >= 4 || "Password must be at least 4 characters"
       ]

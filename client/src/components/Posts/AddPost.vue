@@ -101,7 +101,6 @@ export default {
   methods: {
     handleAddPost() {
       if (this.$refs.form.validate()) {
-        // add post action
         this.$store.dispatch("addPost", {
           title: this.title,
           imageUrl: this.imageUrl,

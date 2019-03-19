@@ -31,30 +31,28 @@
 
           <v-spacer></v-spacer>
         </v-toolbar>
-
-        <v-list ref="chatcontainer" class="Chat-Container" id="scroll-target" subheader>
-          <v-subheader>Recent chat</v-subheader>
-          <v-list-tile
+        <v-flex id="scroll-target" ref="chatcontainer" class="Chat-Container" align-self-center>
+          <div
             v-scroll:#scroll-target="onScroll"
             v-for="item in currentChatRoomMessages"
             :key="item._id"
-            avatar
-            @click.prevent
+            class="Chat-Message"
           >
-            <v-list-tile-avatar>
-              <img :src="item.avatar">
-            </v-list-tile-avatar>
+            <div class="Chat-Message_Avatar">
+              <img :src="item.avatar" alt="avatr">
+            </div>
 
-            <v-list-tile-content>
-              <v-list-tile-title>
-                <span>{{item.username}}</span>
-                <span class="ChatRoom_Message_Date caption">{{item.createdDate}}</span>
-              </v-list-tile-title>
-              <v-list-tile-sub-title class="ChatRoom_Message_Text" v-html="item.message"></v-list-tile-sub-title>
-            </v-list-tile-content>
-          </v-list-tile>
-        </v-list>
-
+            <div class="Chat-Message_Info">
+              <div class="Chat-Message_Header">
+                <div class="Chat-Message_Header_UserName">{{item.username}}</div>
+                <div class="Chat-Message_Header_Data">{{item.createdDate}}</div>
+              </div>
+              <div class="Chat-Message_Text">
+                <p>{{item.message}}</p>
+              </div>
+            </div>
+          </div>
+        </v-flex>
         <v-divider></v-divider>
 
         <v-container>
@@ -96,7 +94,7 @@ export default {
       oldScrollHeight: 0,
       usersOnline: [
         {
-          username: "Test",
+          username: "Under construction",
           avatar: "https://cdn.vuetifyjs.com/images/lists/1.jpg",
           icon: true
         }
@@ -105,34 +103,50 @@ export default {
       currentRoomId: this.$route.params.id,
       access: this.$route.params.access,
       message: "",
-      messageRules: [message => !!message || "write something"]
+      messageRules: [
+        message => !!message || "write something",
+        message => message.length < 150 || "limit is 150 symbols"
+      ]
     };
   },
   methods: {
     onScroll(e) {
       this.scrollPosition = e.target.scrollTop;
-      // console.log(e.target);
     },
     scrollToBot(elem) {
-      console.log("scrolled to Bot", elem);
       elem.scrollTop = elem.scrollHeight - elem.clientHeight;
     },
     async sendMessage() {
+      if (this.$refs.form.validate()) {
+        const payload = {
+          roomId: this.currentRoomId,
+          userid: this.user._id,
+          username: this.user.username,
+          avatar: this.user.avatar,
+          message: this.message,
+          private: false
+        };
+        await this.$store.dispatch("sendChatMessage", payload);
+        this.socket.emit("message", payload);
+      }
+      this.message = "";
+    },
+    async sendPrivateMessage() {
       const payload = {
         roomId: this.currentRoomId,
         userid: this.user._id,
+        anotheruserid: "5c87b25987ef1e21401f6caa",
         username: this.user.username,
         avatar: this.user.avatar,
         message: this.message,
-        private: false
+        private: true
       };
       this.socket.emit("message", payload);
-      await this.$store.dispatch("sendChatMessage", payload);
+      await this.$store.dispatch("sendPrivateChatMessage", payload);
       this.message = "";
     },
     async showMessages() {
       this.pageNum = 1;
-      // fetch more data and transform original result
       let payload = {
         pageNum: this.pageNum,
         pageSize: this.pageSize,
@@ -143,7 +157,6 @@ export default {
     },
     async showMoreMessages() {
       this.pageNum += 1;
-      // fetch more data and transform original result
       let payload = {
         pageNum: this.pageNum,
         pageSize: this.pageSize,
@@ -154,39 +167,45 @@ export default {
   },
   watch: {
     async scrollPosition(newVal, oldVal) {
-      // console.log("newValScroll", newVal, "oldValScroll", oldVal);
       if (oldVal > 0 && newVal === 0) {
-        console.log("fetching latest messages");
         await this.showMoreMessages();
       }
     },
-    scrollHeight(newVal, oldVal) {
-      if (newVal > oldVal && oldVal > 0 && newVal > 0) {
-        this.oldScrollHeight = this.$refs.chatcontainer.$el.scrollTop =
-          newVal - oldVal;
-        console.log("scrollHeight Worked");
-      }
-    },
     currentChatRoomMessages(newVal, oldVal) {
-      console.log(
-        "newValcurrentChatRoomMessages",
-        newVal,
-        "oldValcurrentChatRoomMessages",
-        oldVal
-      );
-      let newScrollHeight = this.$refs.chatcontainer.$el.scrollHeight;
-      this.$refs.chatcontainer.$el.scrollTop =
-        newScrollHeight - this.oldScrollHeight;
-      console.log(newScrollHeight - this.oldScrollHeight);
-      this.oldScrollHeight = newScrollHeight;
+      if (newVal.length - oldVal.length > 1) {
+        let newScrollHeight = this.$refs.chatcontainer.scrollHeight;
+
+        this.$refs.chatcontainer.scrollTop =
+          newScrollHeight - this.oldScrollHeight;
+        this.oldScrollHeight = newScrollHeight;
+      }
+      if (newVal.length - oldVal.length === 1) {
+        this.scrollToBot(this.$refs.chatcontainer);
+      }
     }
   },
   computed: {
-    ...mapGetters(["loading", "user", "currentChatRoomMessages"])
+    ...mapGetters([
+      "loading",
+      "user",
+      "currentChatRoomMessages",
+      "currentUserCorrespondenceMessages"
+    ])
   },
   async created() {
-    await this.showMessages();
-    console.log(this.$refs.chatcontainer.$el);
+    if (this.access === "correspondence") {
+      let payload = {
+        token: localStorage.getItem("token"),
+        anotheruserid: "5c87b25987ef1e21401f6caa"
+      };
+      await this.$store.dispatch(
+        "getCurrentUserCorrespondenceMessages",
+        payload
+      );
+      this.scrollToBot(this.$refs.chatcontainer.$el);
+    } else {
+      await this.showMessages();
+    }
   },
   mounted() {
     this.socket = io("localhost:4000");
@@ -197,27 +216,17 @@ export default {
     this.socket.on("getMessage", async data => {
       await this.$store.dispatch("setChatMessage", data);
     });
-    this.socket.on("editMessage", async data => {
-      // await this.props.replaceMessage({
-      //   index: data.index,
-      //   newMessage: data.text
-      // });
-    });
-    this.socket.on("resetMessage", deleted => {
-      // this.props.removeMessage(deleted);
-    });
   },
   updated() {
-    // Scroll chat to bot when component initiated
+    // Scroll chat to bot when component initialized
     if (this.currentChatRoomMessages.length === this.pageSize) {
-      this.scrollToBot(this.$refs.chatcontainer.$el);
+      this.scrollToBot(this.$refs.chatcontainer);
     }
   },
   beforeDestroy() {},
   destroyed() {
     this.pageNum = 0;
     this.$store.dispatch("clearMessages");
-    // const reason = "user exited the room";
     this.socket.emit("disconnectRoom", "user exited the room");
   }
 };
@@ -231,30 +240,74 @@ export default {
 .ChatRoom_Message_Date {
   margin-left: 20px;
   padding: 0 10px;
-  border: 1px solid #000;
 }
-.ChatRoom_Message_Text {
-  border: 1px solid #000;
-  margin-left: 20px;
-  padding: 0 20px;
-  border-radius: 0px 10px 10px 10px;
-}
-.Private-Message {
-  border-radius: 0px 0 20px 0;
-  padding-left: 20px;
-  align-self: flex-start;
-}
+
 .Chat-Container {
   overflow: hidden;
   overflow-y: scroll;
-  height: 60vh;
+  height: 70vh;
 }
+
+.Chat-Container > .Chat-Message {
+  display: flex;
+  position: relative;
+  margin-top: 12px;
+}
+
+.Chat-Container > .Chat-Message > .Chat-Message_Avatar {
+  overflow: hidden;
+  display: block;
+  width: 10%;
+}
+
+.Chat-Container > .Chat-Message > .Chat-Message_Avatar > img {
+  border-radius: 50%;
+  width: 100%;
+}
+
+.Chat-Container > .Chat-Message > .Chat-Message_Info {
+  padding-left: 20px;
+  display: flex;
+  width: 90%;
+  flex-direction: column;
+  flex-wrap: wrap;
+}
+
+.Chat-Container > .Chat-Message > .Chat-Message_Info > .Chat-Message_Header {
+  display: flex;
+}
+
+.Chat-Container
+  > .Chat-Message
+  > .Chat-Message_Info
+  > .Chat-Message_Header
+  > .Chat-Message_Header_UserName {
+  display: flex;
+  font-weight: bold;
+  font-size: 1.2rem;
+  padding-right: 15px;
+}
+
+.Chat-Container > .Chat-Message > .Chat-Message_Info > .Chat-Message_Text {
+  padding-top: 10px;
+  padding-left: 10px;
+  margin-top: 10px;
+  box-shadow: 3px 3px 15px 1px black;
+  border-radius: 0px 10px 10px 10px;
+  word-wrap: break-word;
+}
+
 .Chat-Sidebar {
   max-height: 60vh;
 }
-
 .Chat-Sidebar-List {
   overflow: hidden;
   overflow-y: scroll;
+}
+
+@media only screen and (max-width: 600px) {
+  .Chat-Message_Header {
+    flex-direction: column;
+  }
 }
 </style>

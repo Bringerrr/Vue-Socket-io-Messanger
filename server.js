@@ -5,10 +5,6 @@ const bodyParser = require("body-parser");
 // express stuff
 const app = express();
 app.use(bodyParser.json());
-// const cors = require("cors");
-// const server = require("http").Server(app);
-
-// app.use(cors());
 
 // graphQL stuff
 const graphqlHttp = require("express-graphql");
@@ -49,75 +45,6 @@ mongoose
     console.log(err);
   });
 
-const server = app.listen(process.env.PORT, () => {
+module.exports = app.listen(process.env.PORT, () => {
   console.log(`Server started at ${process.env.PORT}`);
-});
-
-const io = require("socket.io")(server);
-const sockets = [];
-const rooms = [];
-io.on("connection", function(socket) {
-  sockets.push(socket);
-  // console.log("sockets online after connection : ", sockets);
-  console.log("socket connected : " + socket.id);
-  socket.on("joinRoom", async payload => {
-    const { roomId } = payload;
-    socket.join(roomId, () => {
-      let rooms = Object.keys(socket.rooms);
-      io.to(roomId).emit(`a new user has joined the room ${roomId}`);
-    });
-    console.log(`socket ${socket.id} joined room ${roomId}`);
-  });
-  socket.on("leaveRoom", async roomid => {
-    const { roomId } = payload;
-    socket.leave(roomId, () => {
-      let rooms = Object.keys(socket.rooms);
-      io.to(roomId).emit(`a user has left the room ${roomId}`);
-    });
-    console.log(`socket ${socket.id} left room ${roomId}`);
-  });
-  socket.on("message", async data => {
-    io.to(data.roomId).emit("getMessage", data);
-  });
-
-  socket.on("editMessage", async message_data => {
-    let check = false;
-    check = await chat.editMessage(
-      message_data.text,
-      message_data._id,
-      message_data.index
-    );
-    if (check === message_data.index) {
-      socket.broadcast.emit("editMessage", message_data);
-    } else {
-    }
-  });
-
-  socket.on("resetMessage", async message_data => {
-    let check = false;
-    check = await chat.resetMessage(message_data._id, message_data.index);
-    if (check === message_data.index) {
-      socket.broadcast.emit("resetMessage", message_data.index);
-    } else {
-    }
-  });
-
-  socket.on("disconnectRoom", reason => {
-    if (reason === "user exited the room") {
-      socket.disconnect();
-      console.log(`socket ${socket.id} closed`);
-    }
-    console.log("Got disconnect!");
-
-    const socketindex = sockets.indexOf(socket);
-    sockets.splice(socketindex, 1);
-    console.log("sockets online left: " + sockets);
-  });
-
-  socket.on("disconnect", () => {
-    console.log("Got disconnect by default!");
-    const socketindex = sockets.indexOf(socket);
-    sockets.splice(socketindex, 1);
-    console.log("sockets online left: " + sockets);
-  });
 });

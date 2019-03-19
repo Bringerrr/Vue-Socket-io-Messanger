@@ -15,16 +15,19 @@ export const GET_POSTS = gql`
 export const GET_CURRENT_USER = gql`
   query {
     getCurrentUser {
-      _id
-      username
-      email
-      password
-      avatar
-      joinDate
-      favorites {
+      tokenExpirationTime
+      user {
         _id
-        title
-        imageUrl
+        username
+        email
+        password
+        avatar
+        joinDate
+        favorites {
+          _id
+          title
+          imageUrl
+        }
       }
     }
   }
@@ -206,6 +209,7 @@ export const ADD_CHAT_ROOM = gql`
       description: $description
       private: $private
     ) {
+      _id
       title
       description
       createdBy
@@ -234,6 +238,7 @@ export const SEND_CHAT_MESSAGE = gql`
       message
       avatar
       private
+      createdDate
     }
   }
 `;

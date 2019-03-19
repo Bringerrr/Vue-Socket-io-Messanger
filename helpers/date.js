@@ -2,8 +2,7 @@ options = {
   hour: "numeric",
   minute: "numeric",
   year: "numeric",
-  month: "long",
-  day: "numeric"
+  month: "long"
 };
 
 exports.dateToString = date => {

@@ -30,11 +30,13 @@ export default new Vuex.Store({
     currentChatRoomMessages: [],
     chat: [],
     user: null,
+    tokenExpirationTimeMilliseconds: null,
     currentUserCorrespondence: [],
     currentUserCorrespondenceMessages: [],
     loading: false,
     error: null,
-    authError: null
+    authError: null,
+    sessionExpired: null
   },
   mutations: {
     setPosts: (state, payload) => {
@@ -55,20 +57,31 @@ export default new Vuex.Store({
     },
     setChatMessage: (state, payload) => {
       if (typeof payload === "object" && payload.length > 0) {
-        payload.forEach(message => {
-          state.currentChatRoomMessages.push(message);
-        });
-      } else state.currentChatRoomMessages.push(payload);
+        state.currentChatRoomMessages = state.currentChatRoomMessages.concat(
+          payload.reverse()
+        );
+      } else
+        state.currentChatRoomMessages = [
+          ...state.currentChatRoomMessages,
+          payload
+        ];
     },
     setOlderChatMessage: (state, payload) => {
       if (typeof payload === "object" && payload.length > 0) {
-        payload.forEach(message => {
-          state.currentChatRoomMessages.unshift(message);
-        });
-      } else state.currentChatRoomMessages.push(payload);
+        state.currentChatRoomMessages = payload
+          .reverse()
+          .concat(state.currentChatRoomMessages);
+      } else
+        state.currentChatRoomMessages = [
+          ...state.currentChatRoomMessages,
+          payload
+        ];
     },
     setUser: (state, payload) => {
       state.user = payload;
+    },
+    setTokenExpirationTimeMilliseconds: (state, payload) => {
+      state.tokenExpirationTimeMilliseconds = payload;
     },
     setAnotherUser: (state, payload) => {
       state.anotheruser = payload;
@@ -93,6 +106,9 @@ export default new Vuex.Store({
     setAuthError: (state, payload) => {
       state.authError = payload;
     },
+    setSessionExpired: (state, payload) => {
+      state.sessionExpired = payload;
+    },
     clearUser: state => (state.user = null),
     clearError: state => (state.error = null),
     clearPublicChatRooms: state => (state.publicChatRooms = null),
@@ -108,6 +124,7 @@ export default new Vuex.Store({
         })
         .then(({ data }) => {
           commit("setLoading", false);
+          console.log("added chat room", data.addChatRoom);
           router.push(`/chat/chatroom/public/${data.addChatRoom._id}`);
         })
         .catch(err => {
@@ -171,8 +188,8 @@ export default new Vuex.Store({
         })
         .then(({ data }) => {
           commit("setLoading", false);
-          // console.log("sendChatMessage", data.sendChatMessage);
-          // commit("setChatMessage", data.sendChatMessage);
+          console.log("sendChatMessage", data.sendChatMessage);
+          commit("setChatMessage", data.sendChatMessage);
         })
         .catch(err => {
           commit("setLoading", false);
@@ -261,11 +278,19 @@ export default new Vuex.Store({
         .then(({ data }) => {
           commit("setLoading", false);
           // Add user data to state
-          commit("setUser", data.getCurrentUser);
+          commit("setUser", data.getCurrentUser.user);
+          commit(
+            "setTokenExpirationTimeMilliseconds",
+            data.getCurrentUser.tokenExpirationTime
+          );
         })
         .catch(err => {
           commit("setLoading", false);
-          console.error(err);
+          // if error is about jwt's expiration - clear the token
+          if (JSON.stringify(err.message.indexOf("jwt expired")) !== -1) {
+            localStorage.removeItem("token");
+            commit("setSessionExpired", true);
+          }
         });
       commit("setLoading", true);
     },
@@ -328,7 +353,7 @@ export default new Vuex.Store({
         .then(({ data }) => {
           commit("setLoading", false);
           localStorage.setItem("token", data.signinUser.token);
-          // to make sure created method is run in main.js (we run getCurrentUser), reload the page
+          commit("setSessionExpired", false);
           router.go();
         })
         .catch(err => {
@@ -348,7 +373,6 @@ export default new Vuex.Store({
         .then(({ data }) => {
           commit("setLoading", false);
           localStorage.setItem("token", data.signupUser.token);
-          // to make sure created method is run in main.js (we run getCurrentUser), reload the page
           router.go();
         })
         .catch(err => {
@@ -358,19 +382,18 @@ export default new Vuex.Store({
         });
     },
     signoutUser: async ({ commit }) => {
-      // clear user in state
       commit("clearUser");
-      // remove token in localStorage
       localStorage.setItem("token", "");
       // end session
       await apolloClient.resetStore();
-      // redirect home - kick users out of private pages (i.e. profile)
       router.push("/");
     }
   },
   getters: {
     posts: state => state.posts,
     user: state => state.user,
+    tokenExpirationTimeMilliseconds: state =>
+      state.tokenExpirationTimeMilliseconds,
     anotheruser: state => state.anotheruser,
     currentUserCorrespondence: state => state.currentUserCorrespondence,
     currentUserCorrespondenceMessages: state =>
@@ -379,6 +402,7 @@ export default new Vuex.Store({
     loading: state => state.loading,
     error: state => state.error,
     authError: state => state.authError,
+    sessionExpired: state => state.sessionExpired,
     publicChatRooms: state => state.publicChatRooms,
     privateChatRooms: state => state.privateChatRooms
   }

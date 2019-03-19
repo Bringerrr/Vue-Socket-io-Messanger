@@ -53,7 +53,6 @@ export default {
   },
   methods: {
     createPublicChatRoom() {
-      console.log(this.user);
       const payload = {
         userid: this.$store.getters.user._id,
         title: this.title,
@@ -62,7 +61,6 @@ export default {
       };
 
       this.$store.dispatch("addChatRoom", payload);
-      // this.$store.dispatch("addPrivateChatRoom", payload);
       this.dialog = false;
     }
   }

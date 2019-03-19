@@ -73,8 +73,13 @@ module.exports = buildSchema(`
     hasMore: Boolean
   }
 
+  type AuthInfo{
+    tokenExpirationTime: Int!
+    user: User!
+  }
+
   type Query {
-    getCurrentUser: User
+    getCurrentUser: AuthInfo
     getCurrentUserCorrespondence: [Correspondence]
     getCurrentUserCorrespondenceMessages: [ChatMessage]
     getPosts: [Post]
