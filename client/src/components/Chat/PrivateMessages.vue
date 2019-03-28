@@ -6,7 +6,7 @@
         v-for="item in currentUserCorrespondence"
         :key="item._id"
         avatar
-        @click.prevent="routeTo(item.anotheruser._id)"
+        @click.prevent="routeTo(item._id)"
       >
         <v-list-tile-avatar>
           <img :src="item.anotheruser.avatar">

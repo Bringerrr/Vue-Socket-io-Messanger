@@ -56,12 +56,14 @@ io.on("connection", function(socket) {
   socket.on("joinRoom", async payload => {
     const { roomId } = payload;
     socket.join(roomId, () => {
+      console.log(payload.username + " joined the room " + roomId);
       io.to(roomId).emit(`a new user has joined the room ${roomId}`);
     });
   });
   socket.on("leaveRoom", async payload => {
     const { roomId } = payload;
     socket.leave(roomId, () => {
+      console.log(payload.username + " left the room " + roomId);
       io.to(roomId).emit(`a user has left the room ${roomId}`);
     });
   });

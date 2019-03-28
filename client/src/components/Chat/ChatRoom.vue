@@ -26,7 +26,7 @@
     </v-flex>
     <v-flex xs9 sm9 offset-sm0 align-self-center>
       <v-card>
-        <v-toolbar color="teal" dark>
+        <v-toolbar color="primary" dark>
           <v-toolbar-title class="text-xs-center">Room {{ $route.params.id }}</v-toolbar-title>
 
           <v-spacer></v-spacer>
@@ -69,7 +69,7 @@
                 ></v-text-field>
               </v-flex>
 
-              <v-btn color="info" type="submit">Send</v-btn>
+              <v-btn color="accent" type="submit">Send</v-btn>
             </v-layout>
           </v-form>
         </v-container>
@@ -118,16 +118,31 @@ export default {
     },
     async sendMessage() {
       if (this.$refs.form.validate()) {
-        const payload = {
-          roomId: this.currentRoomId,
-          userid: this.user._id,
-          username: this.user.username,
-          avatar: this.user.avatar,
-          message: this.message,
-          private: false
-        };
-        await this.$store.dispatch("sendChatMessage", payload);
-        this.socket.emit("message", payload);
+        if (this.access !== "correspondence") {
+          let payload = {
+            roomId: this.currentRoomId,
+            userid: this.user._id,
+            username: this.user.username,
+            avatar: this.user.avatar,
+            message: this.message,
+            private: false
+          };
+          await this.$store.dispatch("sendChatMessage", payload);
+          this.socket.emit("message", payload);
+        } else {
+          console.log("SENT PRIVATE MESSAGE");
+          let payload = {
+            roomId: this.currentRoomId,
+            userid: this.user._id,
+            anotheruserid: "5c7e49c678691e1eccbd76e7",
+            username: this.user.username,
+            avatar: this.user.avatar,
+            message: this.message,
+            private: true
+          };
+          this.socket.emit("message", payload);
+          await this.$store.dispatch("sendPrivateChatMessage", payload);
+        }
       }
       this.message = "";
     },
@@ -135,7 +150,7 @@ export default {
       const payload = {
         roomId: this.currentRoomId,
         userid: this.user._id,
-        anotheruserid: "5c87b25987ef1e21401f6caa",
+        anotheruserid: "5c7e49c678691e1eccbd76e7",
         username: this.user.username,
         avatar: this.user.avatar,
         message: this.message,
@@ -150,7 +165,8 @@ export default {
       let payload = {
         pageNum: this.pageNum,
         pageSize: this.pageSize,
-        roomid: this.currentRoomId
+        roomid: this.currentRoomId,
+        roomtype: this.access
       };
       this.$store.dispatch("infiniteScrollMessages", payload);
       return true;
@@ -160,7 +176,8 @@ export default {
       let payload = {
         pageNum: this.pageNum,
         pageSize: this.pageSize,
-        roomid: this.currentRoomId
+        roomid: this.currentRoomId,
+        roomtype: this.access
       };
       this.$store.dispatch("infiniteScrollMessages", payload);
     }
@@ -193,25 +210,30 @@ export default {
     ])
   },
   async created() {
-    if (this.access === "correspondence") {
-      let payload = {
-        token: localStorage.getItem("token"),
-        anotheruserid: "5c87b25987ef1e21401f6caa"
-      };
-      await this.$store.dispatch(
-        "getCurrentUserCorrespondenceMessages",
-        payload
-      );
-      this.scrollToBot(this.$refs.chatcontainer.$el);
-    } else {
-      await this.showMessages();
-    }
+    // if (this.access === "correspondence") {
+    //   console.log("correspondence messages");
+    //   let payload = {
+    //     token: localStorage.getItem("token"),
+    //     anotheruserid: "5c7e49c678691e1eccbd76e7"
+    //   };
+    //   await this.$store.dispatch(
+    //     "getCurrentUserCorrespondenceMessages",
+    //     payload
+    //   );
+    //   this.scrollToBot(this.$refs.chatcontainer.$el);
+    // } else {
+    //   await this.showMessages();
+    // }
+
+    await this.showMessages();
   },
   mounted() {
     this.socket = io("localhost:4000");
     this.socket.emit("joinRoom", {
       roomId: this.currentRoomId,
-      username: this.user
+      username: this.user.username,
+      avatar: this.user.avatar,
+      _id: this.user._id
     });
     this.socket.on("getMessage", async data => {
       await this.$store.dispatch("setChatMessage", data);
@@ -227,6 +249,12 @@ export default {
   destroyed() {
     this.pageNum = 0;
     this.$store.dispatch("clearMessages");
+    this.socket.emit("leaveRoom", {
+      roomId: this.currentRoomId,
+      username: this.user.username,
+      avatar: this.user.avatar,
+      _id: this.user._id
+    });
     this.socket.emit("disconnectRoom", "user exited the room");
   }
 };
@@ -295,6 +323,7 @@ export default {
   box-shadow: 3px 3px 15px 1px black;
   border-radius: 0px 10px 10px 10px;
   word-wrap: break-word;
+  flex-shrink: 0.2;
 }
 
 .Chat-Sidebar {

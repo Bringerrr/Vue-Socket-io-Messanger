@@ -17,7 +17,8 @@ import {
   GET_PRIVATE_CHAT_ROOMS,
   GET_CURRENT_CHAT_ROOM_MESSAGES,
   INFINITE_SCROLL_MESSAGES,
-  SEND_CHAT_MESSAGE
+  SEND_CHAT_MESSAGE,
+  SEND_PRIVATE_CHAT_MESSAGE
 } from "./queries";
 
 Vue.use(Vuex);
@@ -182,6 +183,22 @@ export default new Vuex.Store({
         .then(({ data }) => {
           commit("setLoading", false);
           commit("setChatMessage", data.sendChatMessage);
+        })
+        .catch(err => {
+          commit("setLoading", false);
+          console.error(err);
+        });
+    },
+    sendPrivateChatMessage: ({ commit }, payload) => {
+      commit("setLoading", true);
+      apolloClient
+        .mutate({
+          mutation: SEND_PRIVATE_CHAT_MESSAGE,
+          variables: payload
+        })
+        .then(({ data }) => {
+          commit("setLoading", false);
+          commit("setChatMessage", data.sendPrivateMessage);
         })
         .catch(err => {
           commit("setLoading", false);

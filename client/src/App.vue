@@ -1,5 +1,7 @@
 <template>
-  <v-app style="background: #E3E3EE; margin-top: 40px">
+  <v-app
+    style="box-sizing: border-box; background: #E3E3EE; height: 100vh; padding-top: 50px; overflow: hidden"
+  >
     <!-- Side Navbar -->
     <v-navigation-drawer app temporary fixed v-model="sideNav">
       <v-toolbar color="accent" dark flat>
@@ -100,8 +102,8 @@
 
     <!-- App Content -->
     <main>
-      <v-container class="mt-4">
-        <transition name="fade">
+      <v-container>
+        <transition>
           <router-view/>
         </transition>
 
@@ -256,6 +258,10 @@ export default {
 </script>
 
 <style>
+* {
+  box-sizing: border-box;
+}
+
 .App_Session-Timer {
   display: flex;
   flex-direction: column;

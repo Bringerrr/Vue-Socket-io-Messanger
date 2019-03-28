@@ -35,6 +35,8 @@ const rootResolver = {
       process.env.SECRET
     );
     const { username, _id } = currentUser;
+
+    // const { username, _id } = req.body.variables;
     const user = await User.findOne({
       username: username
     })
@@ -165,14 +167,24 @@ const rootResolver = {
       pageNum,
       pageSize,
       roomid,
+      roomtype,
       userid,
       anotheruserid
     } = req.body.variables;
 
     let chatRoom;
     let skip = pageSize * (pageNum - 1);
+    let model;
+
+    if (roomtype !== "correspondence") {
+      model = ChatRoom;
+    }
+    if (roomtype === "correspondence") {
+      model = Correspondence;
+    }
     if (pageNum === 1) {
-      chatRoom = await ChatRoom.findOne({ _id: roomid })
+      chatRoom = await model
+        .findOne({ _id: roomid })
         .populate({
           path: "messages",
           model: "ChatMessage",
@@ -187,7 +199,8 @@ const rootResolver = {
       });
     } else {
       // If page number is greater than one, figure out how many documents to skip
-      chatRoom = await ChatRoom.findOne({ _id: roomid })
+      chatRoom = await model
+        .findOne({ _id: roomid })
         .populate({
           path: "messages",
           model: "ChatMessage",
@@ -255,15 +268,14 @@ const rootResolver = {
       });
 
       const data = await Correspondence.findOne({
-        participants: [
-          req.body.variables.userid,
-          req.body.variables.anotheruserid
-        ]
+        participants: req.body.variables.userid,
+        participants: req.body.variables.anotheruserid
       });
 
       // if querry don't find correspondence between two users
       if (data === null) {
         // create new correspondence
+        console.log("creating NEW Corresp");
         const newCorrespondence = await new Correspondence({
           participants: [
             req.body.variables.userid,
@@ -344,7 +356,7 @@ const rootResolver = {
       throw new Error("Invalid password");
     }
     const token = await {
-      token: createToken(user, process.env.SECRET, "10min")
+      token: createToken(user, process.env.SECRET, "2hr")
     };
     return token;
   },
@@ -359,7 +371,7 @@ const rootResolver = {
       email: req.body.variables.email,
       password: req.body.variables.password
     }).save();
-    return { token: createToken(newUser, process.env.SECRET, "1hr") };
+    return { token: createToken(newUser, process.env.SECRET, "2hr") };
   }
 };
 

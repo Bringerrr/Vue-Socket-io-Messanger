@@ -265,6 +265,7 @@ export const SEND_PRIVATE_CHAT_MESSAGE = gql`
       message
       private
       createdDate
+      avatar
     }
   }
 `;
