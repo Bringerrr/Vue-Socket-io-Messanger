@@ -29,7 +29,8 @@ const chatShema = new mongoose.Schema({
   createdDate: {
     type: Date,
     default: Date.now
-  }
+  },
+  seenBy: {}
 });
 
 module.exports = mongoose.model("ChatMessage", chatShema);

@@ -19,6 +19,7 @@ export const GET_CURRENT_USER = gql`
       user {
         _id
         username
+        role
         email
         password
         avatar

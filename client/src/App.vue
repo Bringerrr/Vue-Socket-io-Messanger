@@ -1,7 +1,5 @@
 <template>
-  <v-app
-    style="box-sizing: border-box; background: #E3E3EE; height: 100vh; padding-top: 50px; overflow: hidden"
-  >
+  <v-app style="box-sizing: border-box; background: #E3E3EE; height: 100vh;  padding-top: 50px;">
     <!-- Side Navbar -->
     <v-navigation-drawer app temporary fixed v-model="sideNav">
       <v-toolbar color="accent" dark flat>
@@ -64,16 +62,18 @@
       <v-spacer></v-spacer>
 
       <!-- Horizontal Navbar Links -->
-      <v-flex v-if="tokenExpirationTimeMilliseconds<5 * 1000* 60">
+      <v-flex v-if="sesionExpirationAlert">
         <div class="text-xs-center">
           <v-badge color="purple" left overlap>
             <div class="App_Session-Timer">
-              <span class="Session-Timer_Title">Session time</span>
-              <template v-slot:badge>
+              <span class="Session-Timer_Title Session-Timer__colored">Session time</span>
+              <!-- <template v-slot:badge>
                 <v-icon dark small>timer</v-icon>
-              </template>
+              </template>-->
 
-              <span>{{millisecondsIntoTimer.minutes}}:{{millisecondsIntoTimer.seconds}}</span>
+              <span
+                class="Session-Timer_Timer Session-Timer__colored"
+              >{{millisecondsIntoTimer.minutes}}:{{millisecondsIntoTimer.seconds}}</span>
             </div>
           </v-badge>
         </div>
@@ -186,6 +186,14 @@ export default {
       "authError",
       "user"
     ]),
+    sesionExpirationAlert() {
+      if (
+        this.tokenExpirationTimeMilliseconds < 5 * 1000 * 60 &&
+        this.tokenExpirationTimeMilliseconds !== null
+      ) {
+        return true;
+      } else false;
+    },
     sessionWasExpiredSnackbar() {
       if (
         this.tokenExpirationTimeMilliseconds < 5 * 1000 * 60 &&
@@ -273,10 +281,18 @@ export default {
   box-sizing: border-box;
 }
 
+.application--wrap {
+  min-height: auto;
+}
+
 .App_Session-Timer {
   display: flex;
   flex-direction: column;
   position: relative;
+}
+
+.Session-Timer__colored {
+  color: #bf653f;
 }
 
 .fade-enter-active,

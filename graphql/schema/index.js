@@ -3,6 +3,7 @@ const { buildSchema } = require("graphql");
 module.exports = buildSchema(`
   type User {
     _id: ID
+    role: String!
     username: String! @unique
     email: String!
     password: String!
