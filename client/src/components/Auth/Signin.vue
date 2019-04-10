@@ -1,6 +1,5 @@
 <template>
   <v-container text-xs-center mt-5 pt-5>
-
     <!-- Signin Title -->
     <v-layout row wrap>
       <v-flex xs12 sm6 offset-sm3>
@@ -20,39 +19,68 @@
       <v-flex xs12 sm6 offset-sm3>
         <v-card color="secondary" dark>
           <v-container>
-            <v-form v-model="isFormValid" lazy-validation ref="form" @submit.prevent="handleSigninUser">
-
+            <v-form
+              v-model="isFormValid"
+              lazy-validation
+              ref="form"
+              @submit.prevent="handleSigninUser"
+            >
               <v-layout row>
                 <v-flex xs12>
-                  <v-text-field :rules="usernameRules" v-model="username" prepend-icon="face" label="Username" type="text" required></v-text-field>
+                  <v-text-field
+                    :rules="usernameRules"
+                    v-model="username"
+                    prepend-icon="face"
+                    label="Username"
+                    type="text"
+                    required
+                  ></v-text-field>
                 </v-flex>
               </v-layout>
 
               <v-layout row>
                 <v-flex xs12>
-                  <v-text-field :rules="passwordRules" v-model="password" prepend-icon="extension" label="Password" type="password" required></v-text-field>
+                  <v-text-field
+                    :rules="passwordRules"
+                    v-model="password"
+                    prepend-icon="extension"
+                    label="Password"
+                    type="password"
+                    required
+                  ></v-text-field>
                 </v-flex>
               </v-layout>
 
               <v-layout row>
                 <v-flex xs12>
-                  <v-btn :loading="loading" :disabled="!isFormValid || loading" color="accent" type="submit">
+                  <v-btn
+                    :loading="loading"
+                    :disabled="!isFormValid || loading"
+                    color="accent"
+                    type="submit"
+                  >
                     <span slot="loader" class="custom-loader">
                       <v-icon light>cached</v-icon>
                     </span>
-                    Signin</v-btn>
-                  <h3>Don't have an account?
+                    Signin
+                  </v-btn>
+                  <h3>
+                    Don't have an account?
                     <router-link to="/signup">Signup</router-link>
                   </h3>
                 </v-flex>
               </v-layout>
-
             </v-form>
           </v-container>
         </v-card>
       </v-flex>
     </v-layout>
 
+    <!-- <v-snackbar v-model="sessionWasExpiredSnackbar" color="error" :timeout="5000" bottom left>
+      <v-icon class="mr-3">cancel</v-icon>
+      <h3>{{errorSession}}</h3>
+      <v-btn dark flat to="/signin">Sign in</v-btn>
+    </v-snackbar>-->
   </v-container>
 </template>
 
@@ -63,6 +91,7 @@ export default {
   name: "Signin",
   data() {
     return {
+      sessionWasExpiredSnackbar: false,
       isFormValid: true,
       username: "",
       password: "",
@@ -82,13 +111,25 @@ export default {
     };
   },
   computed: {
-    ...mapGetters(["loading", "error", "user"])
+    ...mapGetters([
+      "loading",
+      "error",
+      "user",
+      "sessionExpired",
+      "errorSession"
+    ])
   },
   watch: {
     user(value) {
       // if user value changes, redirect to home page
       if (value) {
         this.$router.push("/");
+      }
+    },
+    errorSession(value) {
+      console.log("SESSION EXPIRED SNACKBAR");
+      if (value !== null) {
+        this.sessionWasExpiredSnackbar = true;
       }
     }
   },

@@ -138,7 +138,8 @@ export default {
             username: this.user.username,
             avatar: this.user.avatar,
             message: this.message,
-            private: true
+            private: true,
+            ref: this.$refs.chatcontainer
           };
           this.socket.emit("message", payload);
           await this.$store.dispatch("sendPrivateChatMessage", payload);
@@ -146,20 +147,22 @@ export default {
       }
       this.message = "";
     },
-    async sendPrivateMessage() {
-      const payload = {
-        roomId: this.currentRoomId,
-        userid: this.user._id,
-        anotheruserid: "5c7e49c678691e1eccbd76e7",
-        username: this.user.username,
-        avatar: this.user.avatar,
-        message: this.message,
-        private: true
-      };
-      this.socket.emit("message", payload);
-      await this.$store.dispatch("sendPrivateChatMessage", payload);
-      this.message = "";
-    },
+    // async sendPrivateMessage() {
+    //   const payload = {
+    //     roomId: this.currentRoomId,
+    //     userid: this.user._id,
+    //     anotheruserid: "5c7e49c678691e1eccbd76e7",
+    //     username: this.user.username,
+    //     avatar: this.user.avatar,
+    //     message: this.message,
+    //     private: true,
+    //     ref: this.$refs.chatcontainer
+    //   };
+    //   console.log("sendPrivateMessage", payload);
+    //   this.socket.emit("message", payload);
+    //   await this.$store.dispatch("sendPrivateChatMessage", payload);
+    //   this.message = "";
+    // },
     async showMessages() {
       this.pageNum = 1;
       let payload = {
@@ -236,6 +239,8 @@ export default {
       _id: this.user._id
     });
     this.socket.on("getMessage", async data => {
+      data.ref = this.$refs.chatcontainer;
+      console.log("message was got", data.ref);
       await this.$store.dispatch("setChatMessage", data);
     });
   },

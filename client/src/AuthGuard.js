@@ -1,10 +1,15 @@
-import store from "./store";
+import jwtDecode from "jwt-decode";
+
+function getTokenExpiration(token) {
+  return jwtDecode(token).exp;
+}
+
+function tokenWasExpired(expirationDateToken) {
+  return expirationDateToken < Math.floor(new Date().getTime() / 1000);
+}
 
 export default (to, from, next) => {
-  if (
-    localStorage.getItem("token") === null ||
-    localStorage.getItem("token") === undefined
-  ) {
+  if (tokenWasExpired(getTokenExpiration(localStorage.getItem("token")))) {
     next({
       path: "/signin"
     });

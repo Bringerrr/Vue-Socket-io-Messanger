@@ -356,7 +356,7 @@ const rootResolver = {
       throw new Error("Invalid password");
     }
     const token = await {
-      token: createToken(user, process.env.SECRET, "2hr")
+      token: createToken(user, process.env.SECRET, "2min")
     };
     return token;
   },
@@ -371,7 +371,7 @@ const rootResolver = {
       email: req.body.variables.email,
       password: req.body.variables.password
     }).save();
-    return { token: createToken(newUser, process.env.SECRET, "2hr") };
+    return { token: createToken(newUser, process.env.SECRET, "2min") };
   }
 };
 

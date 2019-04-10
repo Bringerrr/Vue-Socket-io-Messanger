@@ -26,6 +26,9 @@ export const defaultClient = new ApolloClient({
     if (!localStorage.token) {
       localStorage.setItem("token", "");
     }
+    if (!localStorage.access_token) {
+      localStorage.setItem("access_token", "");
+    }
 
     // operation adds the token to an authorization header, which is sent to backend
     operation.setContext({
@@ -46,9 +49,9 @@ export const defaultClient = new ApolloClient({
           store.commit("setAuthError", err);
           store.dispatch("signoutUser");
         }
-        if (JSON.stringify(err.message.indexOf("jwt expired")) !== -1) {
-          router.push("/signin");
-        }
+        // if (JSON.stringify(err.message.indexOf("jwt expired")) !== -1) {
+        //   router.push("/signin");
+        // }
       }
     }
   }

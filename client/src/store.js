@@ -23,6 +23,10 @@ import {
 
 Vue.use(Vuex);
 
+function scrollToBot(elem) {
+  elem.scrollTop = elem.scrollHeight - elem.clientHeight;
+}
+
 export default new Vuex.Store({
   state: {
     posts: [],
@@ -36,6 +40,7 @@ export default new Vuex.Store({
     currentUserCorrespondenceMessages: [],
     loading: false,
     error: null,
+    errorSession: null,
     authError: null,
     sessionExpired: null
   },
@@ -65,6 +70,7 @@ export default new Vuex.Store({
           ...state.currentChatRoomMessages,
           payload
         ];
+      console.log("setChatMessage", payload);
     },
     setOlderChatMessage: (state, payload) => {
       if (typeof payload === "object" && payload.length > 0) {
@@ -97,6 +103,9 @@ export default new Vuex.Store({
     },
     setError: (state, payload) => {
       state.error = payload;
+    },
+    setErrorSession: (state, payload) => {
+      state.errorSession = payload;
     },
     setAuthError: (state, payload) => {
       state.authError = payload;
@@ -191,6 +200,7 @@ export default new Vuex.Store({
     },
     sendPrivateChatMessage: ({ commit }, payload) => {
       commit("setLoading", true);
+      // console.log("sendPrivateChatMessage_vuex_store", payload);
       apolloClient
         .mutate({
           mutation: SEND_PRIVATE_CHAT_MESSAGE,
@@ -199,6 +209,10 @@ export default new Vuex.Store({
         .then(({ data }) => {
           commit("setLoading", false);
           commit("setChatMessage", data.sendPrivateMessage);
+          console.log("sendPrivateChatMessage_vuex_store", payload.ref);
+        })
+        .then(() => {
+          scrollToBot(payload.ref);
         })
         .catch(err => {
           commit("setLoading", false);
@@ -207,7 +221,11 @@ export default new Vuex.Store({
     },
     setChatMessage: ({ commit }, payload) => {
       try {
-        commit("setChatMessage", payload);
+        async () => {
+          await commit("setChatMessage", payload);
+          console.log("setChatMEssageVuex");
+          await scrollToBot(payload.ref);
+        };
       } catch (err) {
         console.error(err);
       }
@@ -286,10 +304,15 @@ export default new Vuex.Store({
         })
         .catch(err => {
           commit("setLoading", false);
+          console.log("setLoading", JSON.stringify(err.message));
+          // commit("setSessionExpired", true);
+          // commit("setErrorSession", JSON.stringify(err.message));
           // if error is about jwt's expiration - clear the token
           if (JSON.stringify(err.message.indexOf("jwt expired")) !== -1) {
-            localStorage.removeItem("token");
+            console.log("JWT WAS EXPIRED", err.message);
+            // localStorage.setItem("token", "");
             commit("setSessionExpired", true);
+            commit("setErrorSession", JSON.stringify(err.message));
           }
         });
       commit("setLoading", true);
@@ -401,6 +424,7 @@ export default new Vuex.Store({
     error: state => state.error,
     authError: state => state.authError,
     sessionExpired: state => state.sessionExpired,
+    errorSession: state => state.errorSession,
     publicChatRooms: state => state.publicChatRooms,
     privateChatRooms: state => state.privateChatRooms
   }

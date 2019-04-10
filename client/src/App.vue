@@ -115,11 +115,11 @@
         </v-snackbar>
 
         <!-- Session was expired Snackbar -->
-        <v-snackbar v-model="sessionWasExpired" color="info" :timeout="5000" bottom left>
+        <!-- <v-snackbar v-model="sessionWasExpiredSnackbar" color="error" :timeout="5000" bottom left>
           <v-icon class="mr-3">cancel</v-icon>
-          <h3>Your session was expired</h3>
+          <h3>{{errorSession}}</h3>
           <v-btn dark flat to="/signin">Sign in</v-btn>
-        </v-snackbar>
+        </v-snackbar>-->
 
         <!-- Auth Error Snackbar -->
         <v-snackbar
@@ -151,7 +151,8 @@ export default {
       sideNav: false,
       authSnackbar: false,
       authErrorSnackbar: false,
-      sessionWasExpired: false,
+      // sessionWasExpiredSnackbar: false,
+      sessionTimer: false,
       timeLeftBeforeSessionExpire: null,
       interval: null,
       timer: null
@@ -170,9 +171,10 @@ export default {
         this.authErrorSnackbar = true;
       }
     },
-    sessionExpired(newValue, oldValue) {
-      if (oldValue === null || newValue === true) {
-        this.sessionWasExpired = true;
+    errorSession(value) {
+      console.log("SESSION EXPIRED SNACKBAR");
+      if (value !== null) {
+        this.sessionWasExpiredSnackbar = false;
       }
     }
   },
@@ -180,9 +182,18 @@ export default {
     ...mapGetters([
       "tokenExpirationTimeMilliseconds",
       "sessionExpired",
+      "errorSession",
       "authError",
       "user"
     ]),
+    sessionWasExpiredSnackbar() {
+      if (
+        this.tokenExpirationTimeMilliseconds < 5 * 1000 * 60 &&
+        this.tokenExpirationTimeMilliseconds >= 0
+      ) {
+        return true;
+      } else return false;
+    },
     horizontalNavItems() {
       let items = [
         { icon: "chat", title: "Posts", link: "/posts" },
