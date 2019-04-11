@@ -41,7 +41,7 @@ export default {
       this.$store.dispatch("getPosts");
     },
     goToPost(postId) {
-      this.$router.push(`/post/${postId}`);
+      this.$router.push(`/posts/${postId}`);
     }
   }
 };

@@ -9,6 +9,8 @@ import {
   GET_CURRENT_USER_CORRESPONDENCE,
   GET_CURRENT_USER_CORRESPONDENCE_MESSAGES,
   GET_POSTS,
+  // GET_USER_POSTS,
+  SEARCH_POSTS,
   ADD_POST,
   SIGNIN_USER,
   SIGNUP_USER,
@@ -35,6 +37,8 @@ export default new Vuex.Store({
     currentChatRoomMessages: [],
     chat: [],
     user: null,
+    userPosts: [],
+    searchResults: [],
     tokenExpirationTimeMilliseconds: null,
     currentUserCorrespondence: [],
     currentUserCorrespondenceMessages: [],
@@ -47,6 +51,11 @@ export default new Vuex.Store({
   mutations: {
     setPosts: (state, payload) => {
       state.posts = payload;
+    },
+    setSearchResults: (state, payload) => {
+      if (payload !== null) {
+        state.searchResults = payload;
+      }
     },
     setChatRoom: (state, payload) => {
       state.publicChatRooms.unshift(payload);
@@ -116,7 +125,8 @@ export default new Vuex.Store({
     clearUser: state => (state.user = null),
     clearError: state => (state.error = null),
     clearPublicChatRooms: state => (state.publicChatRooms = null),
-    clearMessages: state => (state.currentChatRoomMessages = [])
+    clearMessages: state => (state.currentChatRoomMessages = []),
+    clearSearchResults: state => (state.searchResults = [])
   },
   actions: {
     addChatRoom: ({ commit }, payload) => {
@@ -317,6 +327,21 @@ export default new Vuex.Store({
         });
       commit("setLoading", true);
     },
+    searchPosts: ({ commit }, payload) => {
+      if (payload.searchTerm === "") {
+        commit("clearSearchResults");
+        return null;
+      }
+      apolloClient
+        .query({
+          query: SEARCH_POSTS,
+          variables: payload
+        })
+        .then(({ data }) => {
+          commit("setSearchResults", data.searchPosts);
+        })
+        .catch(err => console.error(err));
+    },
     getCurrentUserCorrespondence: async ({ commit }) => {
       commit("setLoading", true);
       apolloClient
@@ -413,6 +438,9 @@ export default new Vuex.Store({
   getters: {
     posts: state => state.posts,
     user: state => state.user,
+    userPosts: state => state.userPosts,
+    searchResults: state => state.searchResults,
+    userFavorites: state => state.user && state.user.favorites,
     tokenExpirationTimeMilliseconds: state =>
       state.tokenExpirationTimeMilliseconds,
     anotheruser: state => state.anotheruser,

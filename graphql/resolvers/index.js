@@ -23,6 +23,9 @@ const rootResolver = {
       const { username } = verifiedToken;
       const user = await User.findOne({
         username: username
+      }).populate({
+        path: "favorites",
+        model: Post
       });
       return { user: user, tokenExpirationTime: jwtExpirationTimeMilliseconds };
     } catch (err) {
@@ -117,6 +120,14 @@ const rootResolver = {
       });
     return posts;
   },
+  getPost: async (args, req) => {
+    const { postId } = req.body.variables;
+    const post = await Post.findOne({ _id: postId }).populate({
+      path: "messages.messageUser",
+      model: "User"
+    });
+    return post;
+  },
   addPost: async (args, req) => {
     const {
       title,
@@ -134,6 +145,90 @@ const rootResolver = {
       createdBy: creatorId
     }).save();
     return newPost;
+  },
+  addPostMessage: async (args, req) => {
+    const { messageBody, userId, postId } = req.body.variables;
+    const newMessage = {
+      messageBody,
+      messageUser: userId
+    };
+    const post = await Post.findOneAndUpdate(
+      // find post by id
+      { _id: postId },
+      // prepend (push) new message to beginning of messages array
+      { $push: { messages: { $each: [newMessage], $position: 0 } } },
+      // return fresh document after update
+      { new: true }
+    ).populate({
+      path: "messages.messageUser",
+      model: "User"
+    });
+    return post.messages[0];
+  },
+  likePost: async (args, req) => {
+    const { postId, username } = req.body.variables;
+    // Find Post, add 1 to its 'like' value
+    const post = await Post.findOneAndUpdate(
+      { _id: postId },
+      { $inc: { likes: 1 } },
+      { new: true }
+    );
+    // Find User, add id of post to its favorites array (which will be populated as Posts)
+    const user = await User.findOneAndUpdate(
+      { username },
+      { $addToSet: { favorites: postId } },
+      { new: true }
+    ).populate({
+      path: "favorites",
+      model: "Post"
+    });
+    // Return only likes from 'post' and favorites from 'user'
+    return { likes: post.likes, favorites: user.favorites };
+  },
+  unlikePost: async (args, req) => {
+    const { postId, username } = req.body.variables;
+    // Find Post, add -1 to its 'like' value
+    const post = await Post.findOneAndUpdate(
+      { _id: postId },
+      { $inc: { likes: -1 } },
+      { new: true }
+    );
+    // Find User, remove id of post from its favorites array (which will be populated as Posts)
+    const user = await User.findOneAndUpdate(
+      { username },
+      { $pull: { favorites: postId } },
+      { new: true }
+    ).populate({
+      path: "favorites",
+      model: "Post"
+    });
+    // Return only likes from 'post' and favorites from 'user'
+    return { likes: post.likes, favorites: user.favorites };
+  },
+  searchPosts: async (args, req) => {
+    const { searchTerm } = req.body.variables;
+    // console.log(searchTerm);
+    if (searchTerm) {
+      const searchResults = await Post.find(
+        {
+          $or: [
+            { title: new RegExp(searchTerm, "i") },
+            { description: new RegExp(searchTerm, "i") }
+          ]
+        }
+        // Perform text search for search value of 'searchTerm'
+        // { $text: { $search: searchTerm } },
+        // Assign 'searchTerm' a text score to provide best match
+        // { score: { $meta: "textScore" } }
+        // Sort results according to that textScore (as well as by likes in descending order)
+      )
+        .sort({
+          // score: { $meta: "textScore" },
+          likes: "desc"
+        })
+        .limit(5);
+      return searchResults;
+    }
   },
   infiniteScrollPosts: async (args, req) => {
     const { pageNum, pageSize } = req.body.variables;

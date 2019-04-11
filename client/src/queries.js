@@ -11,6 +11,42 @@ export const GET_POSTS = gql`
   }
 `;
 
+export const GET_POST = gql`
+  query($postId: ID!) {
+    getPost(postId: $postId) {
+      _id
+      title
+      imageUrl
+      categories
+      description
+      likes
+      createdDate
+      messages {
+        _id
+        messageBody
+        messageDate
+        messageUser {
+          _id
+          username
+          avatar
+        }
+      }
+    }
+  }
+`;
+
+export const SEARCH_POSTS = gql`
+  query($searchTerm: String) {
+    searchPosts(searchTerm: $searchTerm) {
+      _id
+      title
+      description
+      imageUrl
+      likes
+    }
+  }
+`;
+
 /* User Queries */
 export const GET_CURRENT_USER = gql`
   query {
@@ -131,6 +167,51 @@ export const ADD_POST = gql`
       imageUrl
       categories
       description
+    }
+  }
+`;
+
+export const ADD_POST_MESSAGE = gql`
+  mutation($messageBody: String!, $userId: ID!, $postId: ID!) {
+    addPostMessage(
+      messageBody: $messageBody
+      userId: $userId
+      postId: $postId
+    ) {
+      _id
+      messageBody
+      messageDate
+      messageUser {
+        _id
+        username
+        avatar
+      }
+    }
+  }
+`;
+
+export const LIKE_POST = gql`
+  mutation($postId: ID!, $username: String!) {
+    likePost(postId: $postId, username: $username) {
+      likes
+      favorites {
+        _id
+        title
+        imageUrl
+      }
+    }
+  }
+`;
+
+export const UNLIKE_POST = gql`
+  mutation($postId: ID!, $username: String!) {
+    unlikePost(postId: $postId, username: $username) {
+      likes
+      favorites {
+        _id
+        title
+        imageUrl
+      }
     }
   }
 `;

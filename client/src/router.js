@@ -38,11 +38,10 @@ const router = new Router({
       beforeEnter: AuthGuard
     },
     {
-      path: "/post/:id",
+      path: "/posts/:postId",
       name: "Post",
       component: Post,
-      props: true,
-      beforeEnter: AuthGuard
+      props: true
     },
     {
       path: "/profile",

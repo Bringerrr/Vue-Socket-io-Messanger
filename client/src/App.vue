@@ -1,5 +1,7 @@
 <template>
-  <v-app style="box-sizing: border-box; background: #E3E3EE; height: 100vh;  padding-top: 50px;">
+  <v-app
+    style="box-sizing: border-box; background: #E3E3EE; min-height: 100vh;  padding-top: 50px;"
+  >
     <!-- Side Navbar -->
     <v-navigation-drawer app temporary fixed v-model="sideNav">
       <v-toolbar color="accent" dark flat>
@@ -51,13 +53,38 @@
 
       <!-- Search Input -->
       <v-text-field
+        v-model="searchTerm"
+        @input="handleSearchPosts"
         flex
         prepend-icon="search"
-        placeholder="Under construction *"
+        placeholder="Search posts"
         color="accent"
         single-line
         hide-details
       ></v-text-field>
+
+      <!-- Search Results Card -->
+      <v-card dark v-if="searchResults.length" id="search__card">
+        <v-list>
+          <v-list-tile
+            v-for="result in searchResults"
+            :key="result._id"
+            @click="goToSearchResult(result._id)"
+          >
+            <v-list-tile-title>
+              {{result.title}} -
+              <span
+                class="font-weight-thin"
+              >{{formatDescription(result.description)}}</span>
+            </v-list-tile-title>
+            <v-spacer></v-spacer>
+            <!-- Show Icon if Result Favorited by User -->
+            <v-list-tile-action v-if="checkIfUserFavorite(result._id)">
+              <v-icon>favorite</v-icon>
+            </v-list-tile-action>
+          </v-list-tile>
+        </v-list>
+      </v-card>
 
       <v-spacer></v-spacer>
 
@@ -87,9 +114,17 @@
         <!-- Profile Button -->
         <v-btn flat to="/profile" v-if="user">
           <v-icon class="hidden-sm-only" left>account_box</v-icon>
-          <v-badge right color="blue darken-2">
-            <!-- <span slot="badge"></span> -->
+          <v-badge right color="error" :class="{ 'bounce': badgeAnimated }">
+            <span slot="badge" v-if="userFavorites.length">{{userFavorites.length}}</span>
             Profile
+          </v-badge>
+        </v-btn>
+
+        <v-btn flat to="/chat" v-if="user">
+          <v-icon class="hidden-sm-only" left>account_box</v-icon>
+          <v-badge right color="error" :class="{ 'bounce': badgeAnimated }">
+            <span slot="badge" v-if="userFavorites.length">{{userFavorites.length}}</span>
+            Chat
           </v-badge>
         </v-btn>
 
@@ -148,6 +183,7 @@ export default {
   name: "App",
   data() {
     return {
+      searchTerm: "",
       sideNav: false,
       authSnackbar: false,
       authErrorSnackbar: false,
@@ -155,7 +191,8 @@ export default {
       sessionTimer: false,
       timeLeftBeforeSessionExpire: null,
       interval: null,
-      timer: null
+      timer: null,
+      badgeAnimated: false
     };
   },
   watch: {
@@ -176,6 +213,13 @@ export default {
       if (value !== null) {
         this.sessionWasExpiredSnackbar = false;
       }
+    },
+    userFavorites(value) {
+      // if user favorites value changed at all
+      if (value) {
+        this.badgeAnimated = true;
+        setTimeout(() => (this.badgeAnimated = false), 1000);
+      }
     }
   },
   computed: {
@@ -184,7 +228,9 @@ export default {
       "sessionExpired",
       "errorSession",
       "authError",
-      "user"
+      "user",
+      "userFavorites",
+      "searchResults"
     ]),
     sesionExpirationAlert() {
       if (
@@ -209,10 +255,7 @@ export default {
         { icon: "create", title: "Sign Up", link: "/signup" }
       ];
       if (this.user) {
-        items = [
-          { icon: "chat", title: "Posts", link: "/posts" },
-          { icon: "chat", title: "Chat", link: "/chat" }
-        ];
+        items = [{ icon: "chat", title: "Posts", link: "/posts" }];
       }
       return items;
     },
@@ -248,6 +291,28 @@ export default {
     }
   },
   methods: {
+    handleSearchPosts() {
+      this.$store.dispatch("searchPosts", {
+        searchTerm: this.searchTerm
+      });
+    },
+    goToSearchResult(resultId) {
+      // Clear search term
+      this.searchTerm = "";
+      // Go to desired result
+      this.$router.push(`/posts/${resultId}`);
+      // Clear search results
+      this.$store.commit("clearSearchResults");
+    },
+    formatDescription(desc) {
+      return desc.length > 30 ? `${desc.slice(0, 30)}...` : desc;
+    },
+    checkIfUserFavorite(resultId) {
+      return (
+        this.userFavorites &&
+        this.userFavorites.some(fave => fave._id === resultId)
+      );
+    },
     handleSignoutUser() {
       this.$store.dispatch("signoutUser");
     },
@@ -280,6 +345,13 @@ export default {
 * {
   box-sizing: border-box;
 }
+#search__card {
+  position: absolute;
+  width: 100vw;
+  z-index: 8;
+  top: 100%;
+  left: 0%;
+}
 
 .application--wrap {
   min-height: auto;
@@ -308,5 +380,29 @@ export default {
 .fade-enter,
 .fade-leave-active {
   opacity: 0;
+}
+
+.bounce {
+  animation: bounce 1s both;
+}
+
+@keyframes bounce {
+  0%,
+  20%,
+  53%,
+  80%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  40%,
+  43% {
+    transform: translate3d(0, -20px, 0);
+  }
+  70% {
+    transform: translate3d(0, -10px, 0);
+  }
+  90% {
+    transform: translate3d(0, -5px, 0);
+  }
 }
 </style>

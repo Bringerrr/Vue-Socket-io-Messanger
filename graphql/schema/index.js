@@ -79,11 +79,23 @@ module.exports = buildSchema(`
     user: User!
   }
 
+  type LikesFaves {
+    likes: Int
+    favorites: [Post]
+  }
+
+  type PostsPage {
+    posts: [Post]
+    hasMore: Boolean
+  }
+
   type Query {
     getCurrentUser: AuthInfo
     getCurrentUserCorrespondence: [Correspondence]
     getCurrentUserCorrespondenceMessages: [ChatMessage]
     getPosts: [Post]
+    getPost(postId: ID!): Post!
+    searchPosts(searchTerm: String): [Post]
     infiniteScrollPosts(pageNum: Int!, pageSize: Int!): PostPage
     getPublicChatRooms: [ChatRoom]
     getPrivateChatRooms: [ChatRoom]
@@ -99,6 +111,18 @@ module.exports = buildSchema(`
       description: String!
       creatorId: ID!
     ): Post!
+    updateUserPost(
+      postId: ID!
+      userId: ID!
+      title: String!
+      imageUrl: String!
+      categories: [String]!
+      description: String!
+    ): Post!
+    deleteUserPost(postId: ID!): Post!
+    addPostMessage(messageBody: String!, userId: ID!, postId: ID!): Message!
+    likePost(postId: ID!, username: String!): LikesFaves!
+    unlikePost(postId: ID!, username: String!): LikesFaves!
     sendChatMessage(userid: ID!, anotheruserid: ID, roomId:ID!, username: String!, avatar: String, message: String!, private: Boolean!): ChatMessage
     sendPrivateMessage(userid: ID!, anotheruserid: ID, roomId:ID!, username: String!, avatar: String, message: String!, private: Boolean!): ChatMessage
     addChatRoom(
